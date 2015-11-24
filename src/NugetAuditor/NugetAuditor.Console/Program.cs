@@ -1,6 +1,4 @@
 ﻿using CommandLine;
-using Newtonsoft.Json;
-using NuGet;
 using System;
 using System.Collections.Generic;
 using System.Linq;

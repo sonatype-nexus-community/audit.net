@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.Lib", "VorSecurity.Lib\NugetAuditor.Lib.csproj", "{B7B53C9B-AAB6-496C-92FA-5E315A71753B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D4969714-324C-4BBB-91E9-95CEF9F749A0}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
@@ -12,9 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D49697
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.ConsoleApp", "VorSecurity.Console\NugetAuditor.ConsoleApp.csproj", "{1027AB36-21FF-4EDF-B383-48393CC0FD9F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.Lib", "NugetAuditor.Lib\NugetAuditor.Lib.csproj", "{B7B53C9B-AAB6-496C-92FA-5E315A71753B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VorSecurity.VSIX", "VorSecurity.VSIX\VorSecurity.VSIX.csproj", "{E40798D3-E58C-48B7-949D-E114507F06A9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.ConsoleApp", "NugetAuditor.Console\NugetAuditor.ConsoleApp.csproj", "{1027AB36-21FF-4EDF-B383-48393CC0FD9F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VorSecurity.VSIX", "NugetAuditor.VSIX\VorSecurity.VSIX.csproj", "{E40798D3-E58C-48B7-949D-E114507F06A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
