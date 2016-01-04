@@ -1,16 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="Audit.Net.VörSecurity.9ced93b6-d7e3-419c-8835-44f4d116d1ad" Version="1.0" Language="en-US" Publisher="Vör Security Ltd." />
-    <DisplayName>Audit.Net</DisplayName>
-    <Description>This package detects and audits installed nuget packages.</Description>
-    <MoreInfo>http://ossindex.net/</MoreInfo>
-    <License>License.txt</License>
+    <Identity Id="VSIXProject1.Aleksander Tusek.034cfc08-d719-47ed-80a9-fdbaeb8450a4" Version="1.0" Language="en-US" Publisher="Aleksander Tusek" />
+    <DisplayName>VSIXProject1</DisplayName>
+    <Description>Empty VSIX Project.</Description>
   </Metadata>
-  <Installation InstalledByMsi="true">
-    <InstallationTarget Version="[14.0,15.0)" Id="Microsoft.VisualStudio.Community" />
-    <InstallationTarget Version="[14.0,15.0)" Id="Microsoft.VisualStudio.Pro" />
-    <InstallationTarget Version="[14.0,15.0)" Id="Microsoft.VisualStudio.Enterprise" />
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[14.0]" />
   </Installation>
   <Dependencies>
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />

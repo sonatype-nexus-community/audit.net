@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NugetAuditor.Lib.OSSIndex;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,24 +9,16 @@ namespace NugetAuditor.Lib
 {
     public class AuditResult
     {
-        private PackageName _packageName;
+        private PackageId _packageId;
         private Artifact _artifact;
         private SCM _scm;
         private IList<Vulnerability> _vulnerabilities;
 
-        public string Id
+        public PackageId PackageId
         {
             get
             {
-                return _packageName.Id;
-            }
-        }
-
-        public string Version
-        {
-            get
-            {
-                return _packageName.Version;
+                return _packageId;
             }
         }
 
@@ -64,7 +57,7 @@ namespace NugetAuditor.Lib
         {
             get
             {
-                return this.Vulnerabilities.Where(x => x.Versions.Any(r => SemVer.Range.IsSatisfied(r, this._packageName.Version)));
+                return this.Vulnerabilities.Where(x => x.Versions.Any(r => SemVer.Range.IsSatisfied(r, this._packageId.Version)));
             }
         }
 
@@ -76,14 +69,14 @@ namespace NugetAuditor.Lib
             }
         }
 
-        public AuditResult(PackageName packageName, Artifact artifact, SCM scm, IList<Vulnerability> vulnerabilities)
+        public AuditResult(PackageId packageId, Artifact artifact, SCM scm, IList<Vulnerability> vulnerabilities)
         {
-            if (packageName == null)
+            if (packageId == null)
             {
-                throw new ArgumentNullException("packageName");
+                throw new ArgumentNullException("packageId");
             }
 
-            this._packageName = packageName;
+            this._packageId = packageId;
             this._artifact = artifact;
             this._scm = scm;
 

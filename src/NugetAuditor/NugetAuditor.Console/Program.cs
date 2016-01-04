@@ -1,6 +1,8 @@
 ﻿using CommandLine;
+using NugetAuditor.Lib;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,8 +13,6 @@ namespace NugetAuditor.ConsoleApp
     {
         static int Main(string[] args)
         {
-            var errNumber = 0;
-
             var options = new Options();
 
             if (!Parser.Default.ParseArgumentsStrict(args, options))
@@ -21,35 +21,38 @@ namespace NugetAuditor.ConsoleApp
                 return -1;
             }
             
-            var packagePath = System.IO.Path.GetFullPath(options.Package);
+            var packagePath = Path.GetFullPath(options.Package);
 
-            if (!System.IO.File.Exists(packagePath))
+            if (!File.Exists(packagePath))
             {
-                Console.WriteLine("File not found.");
+                Console.WriteLine("Package file \"{0}\" not found.", options.Package);
+                Console.WriteLine(options.GetUsage());
                 return -2;
             }
 
-            Console.WriteLine("Auditing package file \"{0}\".", options.Package);
-            Console.WriteLine();
+            if (options.Verbose)
+            {
+                Console.WriteLine("Auditing package file \"{0}\".", options.Package);
+                Console.WriteLine();
+            }
 
-            var auditor = new Lib.NugetAuditor();
 
-            var auditResults = auditor.AuditPackages(packagePath);
+
+            var auditResults = Lib.NugetAuditor.AuditPackages(packagePath, options.CacheSync);
 
             var totalPackages = auditResults.Count();
+            var vulnerablePackages = 0;
             var packageNum = 1;
 
-            foreach (var res in auditResults)
+            foreach (var auditResult in auditResults)
             {
-                Console.Write("[{0}/{1}] ", packageNum++, totalPackages, res.Id, res.Version);
+                Console.Write("[{0}/{1}] ", packageNum++, totalPackages);
+                Console.Write("{0} {1} ", auditResult.PackageId.Id, auditResult.PackageId.Version);
 
-                Action outPackageName = () => { Console.Write("{0} {1} ", res.Id, res.Version); };
-
-                switch (res.Status)
+                switch (auditResult.Status)
                 {
                     case Lib.AuditStatus.UnknownPackage:
                         {
-                            outPackageName();
                             Console.ForegroundColor = ConsoleColor.Magenta;
                             Console.WriteLine("Unknown package.");
                             Console.ResetColor();
@@ -57,7 +60,6 @@ namespace NugetAuditor.ConsoleApp
                         }
                     case Lib.AuditStatus.UnknownSource:
                         {
-                            outPackageName();
                             Console.ForegroundColor = ConsoleColor.Blue;
                             Console.WriteLine("Unknown source for package.");
                             Console.ResetColor();
@@ -65,7 +67,6 @@ namespace NugetAuditor.ConsoleApp
                         }
                     case Lib.AuditStatus.NoKnownVulnerabilities:
                         {
-                            outPackageName();
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("No known vulnerabilities");
                             Console.ResetColor();
@@ -73,35 +74,40 @@ namespace NugetAuditor.ConsoleApp
                         }
                     case Lib.AuditStatus.KnownVulnerabilities:
                         {
-                            outPackageName();
                             Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", res.Vulnerabilities.Count(), res.AffectingVulnerabilities.Count());
+                            Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
                             Console.ResetColor();
                             break;
                         }
                     case Lib.AuditStatus.Vulnerable:
                         {
-                            outPackageName();
+                            vulnerablePackages++;
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("[VULNERABLE]");
                             Console.ResetColor();
-                            Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", res.Vulnerabilities.Count(), res.AffectingVulnerabilities.Count());
+                            Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
                             
-                            foreach (var item in res.AffectingVulnerabilities)
+                            foreach (var item in auditResult.AffectingVulnerabilities)
                             {
                                 Console.WriteLine();
                                 Console.WriteLine(item.Title);
                                 Console.WriteLine(item.Summary);
                             }
-
                             break;
                         }
                 }
             }
+
             Console.WriteLine();
-            Console.WriteLine("Done auditing package file \"{0}\".", options.Package);
-            Console.ReadLine();
-            return errNumber;
+
+            if (options.Verbose)
+            {
+                Console.WriteLine("Done auditing package file \"{0}\".", options.Package);
+                Console.WriteLine("Press any key to exit.");
+                Console.ReadLine();
+            }
+
+            return vulnerablePackages;
         }
     }
 }

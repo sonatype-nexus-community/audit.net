@@ -15,10 +15,8 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.Win32;
-using NuGet.VisualStudio;
-using Microsoft.VisualStudio.ComponentModelHost;
 
-namespace NugetAuditor.VSIX
+namespace VSIXProject1
 {
     /// <summary>
     /// This is the class that implements the package exposed by this assembly.
@@ -39,26 +37,24 @@ namespace NugetAuditor.VSIX
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-    [Guid(OSSAuditPackage.PackageGuidString)]
-    [ProvideAutoLoad(Microsoft.VisualStudio.Shell.Interop.UIContextGuids.SolutionExists)]
+    [Guid(VSPackage1.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
-    public sealed class OSSAuditPackage : Package
+    public sealed class VSPackage1 : Package
     {
         /// <summary>
         /// VSPackage1 GUID string.
         /// </summary>
-        public const string PackageGuidString = "ce757590-3765-4ccb-a174-9b813e6a5431";
+        public const string PackageGuidString = "dba96f02-8952-47e5-9afe-2d5de46b335f";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OSSAuditPackage"/> class.
+        /// Initializes a new instance of the <see cref="VSPackage1"/> class.
         /// </summary>
-        public OSSAuditPackage()
+        public VSPackage1()
         {
             // Inside this method you can place any initialization code that does not require
             // any Visual Studio service because at this point the package object is created but
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
-            Factory.ServiceProvider = this;
         }
 
         #region Package Members
@@ -70,26 +66,6 @@ namespace NugetAuditor.VSIX
         protected override void Initialize()
         {
             base.Initialize();
-
-            TaskManager.Initialize(this);
-            OSSAuditor.Initialize(this);
-            OSSAuditor.AuditInstalledPackages();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            try
-            {
-                if (disposing)
-                {
-                    Factory.CleanupFactory();
-                    GC.SuppressFinalize(this);
-                }
-            }
-            finally
-            {
-                base.Dispose(disposing);
-            }
         }
 
         #endregion

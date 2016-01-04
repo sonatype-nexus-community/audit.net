@@ -27,7 +27,7 @@ using System.Threading.Tasks;
 }
 */
 
-namespace NugetAuditor.Lib
+namespace NugetAuditor.Lib.OSSIndex
 {
 	public class Artifact
     {
