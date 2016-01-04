@@ -24,51 +24,12 @@ namespace NugetAuditor.VSIX
             this._auditResult = auditResult;
             this._packageReference = packageReference;
 
-            FillTask();
-        }
-
-        private void FillTask()
-        {
             this.Category = TaskCategory.CodeSense;
             this.Document = _packageReference.File;
             this.Line = _packageReference.StartLine - 1;
             this.Column = _packageReference.StartPos;
             this.HelpKeyword = _packageReference.Id;
             this.Priority = TaskPriority.Normal;
-
-            switch (_auditResult.Status)
-            {
-                case Lib.AuditStatus.KnownVulnerabilities:
-                    {
-                        this.ErrorCategory = TaskErrorCategory.Warning;
-                        this.Text = string.Format("KnownVulnerabilities: {0}", _auditResult.PackageId);
-                        break;
-                    }
-                case Lib.AuditStatus.UnknownPackage:
-                    {
-                        this.ErrorCategory = TaskErrorCategory.Message;
-                        this.Text = string.Format("UnknownPackage: {0}", _auditResult.PackageId);
-                        break;
-                    }
-                case Lib.AuditStatus.UnknownSource:
-                    {
-                        this.ErrorCategory = TaskErrorCategory.Message;
-                        this.Text = string.Format("UnknownSource: {0}", _auditResult.PackageId);
-                        break;
-                    }
-                case Lib.AuditStatus.Vulnerable:
-                    {
-                        this.ErrorCategory = TaskErrorCategory.Error;
-                        this.Text = string.Format("Vulnerable: {0}", _auditResult.PackageId);
-                        break;
-                    }
-                default:
-                    {
-                        this.ErrorCategory = TaskErrorCategory.Message;
-                        this.Text = string.Format("Unknown audit status ({0}): {1}", _auditResult.Status, _auditResult.PackageId);
-                        break;
-                    }
-            }
         }
 
         public void CreateTextLineMarker(IVsTextLines buffer)
