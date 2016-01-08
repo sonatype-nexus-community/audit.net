@@ -13,6 +13,7 @@ using System.Threading;
 using NuGet.VisualStudio;
 using System.Diagnostics;
 using Microsoft.VisualStudio;
+using NuGet.Versioning;
 
 namespace NugetAuditor.VSIX
 {
@@ -21,6 +22,7 @@ namespace NugetAuditor.VSIX
         private IServiceProvider _serviceProvider;
         private AuditTaskProvider _taskProvider;
 
+        private DTE _dte;
         private DocumentEvents _documentEvents;
 
         private IVsPackageInstallerEvents _packageInstallerEvents;
@@ -50,9 +52,9 @@ namespace NugetAuditor.VSIX
             _packageInstallerEvents.PackageReferenceAdded += InstallerEvents_PackageReferenceAdded;
             _packageInstallerEvents.PackageReferenceRemoved += InstallerEvents_PackageReferenceRemoved;
 
-            var dte = ServiceLocator.GetInstance<DTE>();
-
-            _documentEvents = dte.Events.DocumentEvents;
+            _dte = ServiceLocator.GetInstance<DTE>();
+            
+            _documentEvents = _dte.Events.DocumentEvents;
 
             _documentEvents.DocumentOpened += OnDocumentOpened;
             _documentEvents.DocumentClosing += OnDocumentClosing;
@@ -67,14 +69,14 @@ namespace NugetAuditor.VSIX
         {
             var packageId = new Lib.PackageId(metadata.Id, metadata.VersionString);
 
-            this.AuditPackage(packageId);
+            this.AuditPackage(metadata);
         }
 
         private void InstallerEvents_PackageReferenceRemoved(IVsPackageMetadata metadata)
         {
             var packageId = new Lib.PackageId(metadata.Id, metadata.VersionString);
 
-            var tasks = _taskProvider.GetTasks<AuditTask>().Where(x => x.PackageId == packageId);
+            var tasks = _taskProvider.GetTasks<VulnerabilityTask>().Where(x => x.PackageId == packageId);
 
             RemoveTasks(tasks.ToArray());
         }
@@ -98,7 +100,7 @@ namespace NugetAuditor.VSIX
         public void RemoveMarkers(string documentPath)
         {
             // Invalidate line markers for document task.
-            foreach (var task in _taskProvider.GetTasks<AuditTask>().Where(x => x.Document.Equals(documentPath, StringComparison.InvariantCultureIgnoreCase)))
+            foreach (var task in _taskProvider.GetTasks<VulnerabilityTask>().Where(x => x.Document.Equals(documentPath, StringComparison.InvariantCultureIgnoreCase)))
             {
                 task.InvalidateTextLineMarker();
             }
@@ -112,14 +114,14 @@ namespace NugetAuditor.VSIX
             if (textLines != null)
             {
                 // Create line markers for each task.
-                foreach (var task in _taskProvider.GetTasks<AuditTask>().Where(x => x.Document.Equals(documentPath, StringComparison.InvariantCultureIgnoreCase)))
+                foreach (var task in _taskProvider.GetTasks<VulnerabilityTask>().Where(x => x.Document.Equals(documentPath, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     task.CreateTextLineMarker(textLines);
                 }
             }
         }
 
-        private void RemoveTasks(AuditTask[] tasks)
+        private void RemoveTasks(VulnerabilityTask[] tasks)
         {
             _taskProvider.SuspendRefresh();
 
@@ -131,27 +133,27 @@ namespace NugetAuditor.VSIX
             _taskProvider.ResumeRefresh();
         }
 
-        public void AuditPackage(PackageId packageId)
+        public void AuditPackage(IVsPackageMetadata package)
         {
             ClearOutput();
 
-            WriteLine("Auditing package {0}", packageId);
+            WriteLine("Auditing package {0}", package.ToString());
 
-            var packageIds = new[] { packageId };
+            var packageIds = new[] { package };
 
             bool started = RunAudit(packageIds, (object sender, AuditCompletedEventArgs e) =>
             {
                 if (e.Exception != null)
                 {
-                    WriteLine("Audit failed for package {0} {1}", packageId, e.Exception);
+                    WriteLine("Audit failed for package {0} {1}", package, e.Exception);
                 }
                 else
                 {
-                    WriteLine("Audit succeeded for package {0}", packageId);
+                    WriteLine("Audit succeeded for package {0}", package);
 
                     _taskProvider.SuspendRefresh();
 
-                    foreach (Project project in AuditHelper.GetAllSupportedProjects())
+                    foreach (Project project in AuditHelper.GetAllSupportedProjects(_dte.Solution))
                     {
                         using (var projectInfo = new ProjectInfo(project))
                         {
@@ -167,23 +169,41 @@ namespace NugetAuditor.VSIX
             if (started)
             {
                 //remove tasks related to this package
-                var tasks = _taskProvider.GetTasks<AuditTask>().Where(x => x.PackageId == packageId);
+                var tasks = _taskProvider.GetTasks<VulnerabilityTask>().Where(x => x.PackageId == new PackageId(package.Id, package.VersionString));
 
                 RemoveTasks(tasks.ToArray());
             }
         }
 
+        //private IEnumerable<IVsPackageMetadata> GetInstalledPackages()
+        //{
+        //    return ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages();
+        //}
+
+        //private IEnumerable<IVsPackageMetadata> GetInstalledPackages(Project project)
+        //{
+        //    var service = ServiceLocator.GetInstance<IVsPackageInstallerServices>();
+
+        //    foreach (var package in service.GetInstalledPackages())
+        //    {
+        //        if (service.IsPackageInstalledEx(project, package.Id, package.VersionString))
+        //        {
+        //            yield return package;
+        //        }
+        //    }
+        //}
+
         public void AuditProjectPackages(Project project)
         {
             ClearOutput();
 
-            var packageIds = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages(project).Select(x => new PackageId(x.Id, x.VersionString));
+            var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages(project);
+                //.Select(x => new PackageId(x.Id, x.VersionString));
 
-            WriteLine("Auditing {0} packages for project {1}.", packageIds.Count(), project.Name);
+            WriteLine("Auditing {0} packages for project {1}.", packages.Count(), project.Name);
 
-            bool started = RunAudit(packageIds, (object sender, AuditCompletedEventArgs e) =>
+            bool started = RunAudit(packages, (object sender, AuditCompletedEventArgs e) =>
             {
-
                 if (e.Exception != null)
                 {
                     WriteLine("Audit failed for project {0}, {1}", project.Name, e.Exception);
@@ -210,7 +230,9 @@ namespace NugetAuditor.VSIX
                 //remove tasks related to this project 
                 using (var projectInfo = new ProjectInfo(project))
                 {
-                    var tasks = _taskProvider.GetTasks<AuditTask>().Where(x => x.Document.Equals(projectInfo.PackageReferencesFile.Path, StringComparison.InvariantCultureIgnoreCase));
+                    var tasks = _taskProvider.GetTasks<VulnerabilityTask>()
+                                    .Where(x => x.Document.Equals(projectInfo.PackageReferencesFile.Path, StringComparison.InvariantCultureIgnoreCase));
+
                     RemoveTasks(tasks.ToArray());
                 }
             }
@@ -220,27 +242,31 @@ namespace NugetAuditor.VSIX
         {
             ClearOutput();
 
-            var packageIds = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages().Select(x => new PackageId(x.Id, x.VersionString));
+            var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages();
+            //.Select(x => new PackageId(x.Id, x.VersionString));
 
-            WriteLine("Auditing {0} NuGet packages for solution.", packageIds.Count());
+            var solutionName = AuditHelper.GetSolutionName(_dte.Solution);
 
-            bool started = RunAudit(packageIds, (object sender, AuditCompletedEventArgs e) =>
+            WriteLine("Auditing {0} packages for solution {1}.", packages.Count(), solutionName);
+
+            bool started = RunAudit(packages, (object sender, AuditCompletedEventArgs e) =>
             {
                 if (e.Exception != null)
                 {
-                    WriteLine("Audit failed for solution. {0}", e.Exception);
+                    WriteLine("Audit failed for solution {0}, {1}", solutionName, e.Exception);
                 }
                 else
                 {
-                    WriteLine("Audit succeeded for solution.");
+                    WriteLine("Audit succeeded for solution {0}.", solutionName);
 
                     _taskProvider.SuspendRefresh();
 
-                    foreach (Project project in AuditHelper.GetAllSupportedProjects())
+                    foreach (Project project in AuditHelper.GetAllSupportedProjects(_dte.Solution))
                     {
                         using (var projectInfo = new ProjectInfo(project))
                         {
                             _taskProvider.AddResults(projectInfo, e.Results);
+
                             AddMarkers(projectInfo.PackageReferencesFile.Path);
                         }
                     }
@@ -252,11 +278,11 @@ namespace NugetAuditor.VSIX
             if (started)
             {
                 //remove all tasks
-                RemoveTasks(_taskProvider.GetTasks<AuditTask>().ToArray());
+                RemoveTasks(_taskProvider.GetTasks<VulnerabilityTask>().ToArray());
             }
         }
 
-        private bool RunAudit(IEnumerable<PackageId> packages, EventHandler<AuditCompletedEventArgs> completedHandler)
+        private bool RunAudit(IEnumerable<IVsPackageMetadata> packages, EventHandler<AuditCompletedEventArgs> completedHandler)
         {
             if (IsAuditRunning)
             {
@@ -275,7 +301,9 @@ namespace NugetAuditor.VSIX
 
                     try
                     {
-                        results = Lib.NugetAuditor.AuditPackages(packages);
+                        var packageIds = packages.Select(x => new PackageId(x.Id, NuGetVersion.Parse(x.VersionString).ToNormalizedString()));
+
+                        results = Lib.NugetAuditor.AuditPackages(packageIds);
                     }
                     catch (Exception ex)
                     {
@@ -311,7 +339,7 @@ namespace NugetAuditor.VSIX
 
         private IVsOutputWindowPane GetOutputPane()
         {
-            return VSPackage.Instance.GetOutputPane(VSConstants.SID_SVsGeneralOutputWindowPane, "Nuget Auditor");
+            return VSPackage.Instance.GetOutputPane(VSConstants.SID_SVsGeneralOutputWindowPane, "Audit.Net");
         }
 
         private void ClearOutput()

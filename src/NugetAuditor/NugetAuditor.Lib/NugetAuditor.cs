@@ -1,14 +1,16 @@
-﻿using System;
+﻿#define BATCH
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Cache;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NugetAuditor.Lib
 {
-    public class NugetAuditor //: INugetAuditor
+    public class NugetAuditor
     {
+        const string pm = "nuget";
+
         private static HttpRequestCachePolicy CachePolicy(int cacheSync)
         {
             switch (cacheSync)
@@ -28,26 +30,48 @@ namespace NugetAuditor.Lib
             }
         }
 
-        private static IEnumerable<AuditResult> AuditPackagesImpl(IEnumerable<PackageId> packages, int cacheSync)
+        private static IEnumerable<AuditResult> AuditPackagesImpl(IEnumerable<PackageId> packageIds, int cacheSync)
         {
             var cachePolicy = CachePolicy(cacheSync);
 
-            var client = new OSSIndex.ApiClient(cachePolicy);
-
-            var artifactSearches = packages.Select(x => new NugetArtifactSearch() { name = x.Id, version = x.Version });
-
+            var client = new OSSIndex.ApiClient(cachePolicy) as Lib.OSSIndex.IApiClient;
+#if (BATCH)
+            var artifactSearches = packageIds.Select(x => new NugetArtifactSearch() { name = x.Id, version = x.VersionString });
             var artifacts = client.SearchArtifacts(artifactSearches);
-            var scms = client.GetSCMs(artifacts.Where(x => x.ScmId > 0).Select(x => x.ScmId).Distinct());
-
-            foreach (var package in packages)
+            var scms = client.GetSCMs(artifacts.Where(x => x.ScmId.HasValue).Select(x => x.ScmId.Value).Distinct());
+#endif
+            foreach (var packageId in packageIds)
             {
-                var artifact = artifacts.Where(x => x.Name == package.Id && x.Version == package.Version).FirstOrDefault();
-                var scm = artifact == null ? null : scms.Where(x => x.Id == artifact.ScmId).FirstOrDefault();
-                var vulnerabilities = scm == null ? null : client.GetScmVulnerabilities(scm.Id);
+                Lib.OSSIndex.Artifact artifact = null;
+                Lib.OSSIndex.SCM scm = null;
+                IList<Lib.OSSIndex.Vulnerability> vulnerabilities = null;
+#if (!BATCH)
+                var search = new NugetArtifactSearch() { name = packageId.Id, version = packageId.VersionString };
+                var artifacts = client.SearchArtifact(search);
+#endif
+                //find first by exact version
+                artifact = artifacts.FirstOrDefault(x => x.Name == packageId.Id && x.Version == packageId.VersionString);
 
-                var result = new AuditResult(package, artifact, scm, vulnerabilities);
-                                
-                yield return result;
+                if (artifact == null)
+                {
+                    //find first by search version
+                    artifact = artifacts.FirstOrDefault(x => x.Search.Contains(packageId.Id) && x.Search.Contains(packageId.VersionString));
+                }
+
+                if (artifact != null && artifact.ScmId.HasValue)
+                {
+#if (BATCH)
+                    scm = scms.Where(x => x.Id == artifact.ScmId).FirstOrDefault();
+#else
+                    scm = client.GetSCM(artifact.ScmId.Value).FirstOrDefault();
+#endif
+                    if (scm != null && scm.HasVulnerability)
+                    {
+                        vulnerabilities = client.GetVulnerabilities(scm.Id);
+                    }
+                }
+
+                yield return new AuditResult(packageId, artifact, scm, vulnerabilities);
             }
         }
 
@@ -73,16 +97,6 @@ namespace NugetAuditor.Lib
         public static IList<AuditResult> AuditPackages(IEnumerable<PackageId> packages, int cacheSync )
         {
             return AuditPackagesImpl(packages, cacheSync).ToList();
-        }
-
-        public static Task<List<AuditResult>> AuditPackagesAsync(IEnumerable<PackageId> packages)
-        {
-            return AuditPackagesAsync(packages, 0);
-        }
-
-        public static Task<List<AuditResult>> AuditPackagesAsync(IEnumerable<PackageId> packages, int cacheSync)
-        {
-            return new Task<List<AuditResult>>(() => AuditPackagesImpl(packages, cacheSync).ToList());
         }
     }
 }

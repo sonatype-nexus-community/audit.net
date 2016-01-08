@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NugetAuditor.VSIX
 {
-    public interface ITask : IVsTaskItem, IVsTaskItem2, IVsTaskItem3, IVsErrorItem, IVsProvideUserContext
+    public interface ITask : /*IVsTaskItem,*/ IVsTaskItem2, IVsTaskItem3, IVsErrorItem, IVsProvideUserContext
     {
     }
 }

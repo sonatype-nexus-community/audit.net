@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Shell.TableManager;
 using Microsoft.VisualStudio.TextManager.Interop;
 using NuGet.VisualStudio;
 using NugetAuditor.Lib;
@@ -51,11 +52,14 @@ namespace NugetAuditor.VSIX
             }
         }
 
+       
+
+       
+
         public TaskProvider(IServiceProvider provider)
         {
             this._provider = provider;
             ProviderGuid = typeof(TaskProvider).GUID;
-            ProviderName = "Nuget Auditor";
 
             InitializeTaskProvider();
         }
@@ -63,6 +67,8 @@ namespace NugetAuditor.VSIX
         private void InitializeTaskProvider()
         {
             _taskList = this.GetService(typeof(SVsErrorList)) as IVsTaskList;
+
+//            (_taskList as IErrorList).TableControl.SubscribeToDataSource(this);
 
             if (_taskList != null)
             {
@@ -74,8 +80,6 @@ namespace NugetAuditor.VSIX
         {
             this.Refresh();
         }
-
-
 
         protected internal object GetService(Type serviceType)
         {
@@ -126,6 +130,7 @@ namespace NugetAuditor.VSIX
                 if (this._suspended == 0)
                 {
                     this._dirty = false;
+
                     ErrorHandler.ThrowOnFailure(this._taskList.RefreshTasks(this._taskListCookie));
                 }
                 else
@@ -167,7 +172,6 @@ namespace NugetAuditor.VSIX
                 {
                     pTaskList.UnregisterTaskProvider(_taskListCookie);
                     _taskListCookie = VSConstants.VSCOOKIE_NIL;
-                    _taskList = null;
                 }
             }
             return VSConstants.S_OK;
@@ -218,12 +222,29 @@ namespace NugetAuditor.VSIX
 
         public int GetColumnCount(out int pnColumns)
         {
-            pnColumns = 0;
-            return VSConstants.E_NOTIMPL;
+            pnColumns = 1;
+            return VSConstants.S_OK;
         }
 
         public int GetColumn(int iColumn, VSTASKCOLUMN[] pColumn)
         {
+            //if (iColumn == 0)
+            //{
+            //    var col = new VSTASKCOLUMN();
+
+            //    col.iField = 2;
+            //    col.bstrCanonicalName = "errorcode";
+            //    col.bstrHeading = "Code";
+            //    col.bstrLocalizedName = "Code";
+            //    col.bstrTip = "Code";
+            //    col.cxDefaultWidth = 100;
+            //    col.fVisibleByDefault = 1;
+                
+            //    pColumn[0] = col;
+
+            //    return VSConstants.S_OK;
+            //}
+
             return VSConstants.E_NOTIMPL;
         }
 
@@ -248,13 +269,15 @@ namespace NugetAuditor.VSIX
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).         
-                    ClearTasks();
                     Tasks.CollectionChanged -= Tasks_CollectionChanged;
-                    ((IVsTaskProvider)this).OnTaskListFinalRelease(_taskList);
+                    ClearTasks();
+                    Tasks.Dispose();
+                    //((IVsTaskProvider)this).OnTaskListFinalRelease(_taskList);
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // TODO: set large fields to null.
+                _tasks = null;
                 _taskList = null;
                 _provider = null;
                 disposedValue = true;
@@ -275,9 +298,37 @@ namespace NugetAuditor.VSIX
             // TODO: uncomment the following line if the finalizer is overridden above.
             GC.SuppressFinalize(this);
         }
+
+        //string ITableDataSource.SourceTypeIdentifier
+        //{
+        //    get
+        //    {
+        //        return StandardTableDataSources.ErrorTableDataSource;
+        //    }
+        //}
+
+        //string ITableDataSource.Identifier
+        //{
+        //    get
+        //    {
+        //        return this.ProviderName;
+        //    }
+        //}
+
+        //string ITableDataSource.DisplayName
+        //{
+        //    get
+        //    {
+        //        return string.Empty;
+        //    }
+        //}
+
+        //IDisposable ITableDataSource.Subscribe(ITableDataSink sink)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
         #endregion
-
-
     }
 
     internal class TaskEnumerator : IVsEnumTaskItems
@@ -343,7 +394,7 @@ namespace NugetAuditor.VSIX
         }
     }
 
-    public sealed class TaskCollection : IList, ICollection, IEnumerable
+    public sealed class TaskCollection : IList, ICollection, IEnumerable, IDisposable
     {
         private ArrayList list;
         private TaskProvider owner;
@@ -491,6 +542,12 @@ namespace NugetAuditor.VSIX
         void IList.RemoveAt(int index)
         {
             this.RemoveAt(index);
+        }
+
+        public void Dispose()
+        {
+            this.list.Clear();
+            this.owner = null;
         }
 
         public int Count

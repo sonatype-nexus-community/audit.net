@@ -12,13 +12,43 @@ namespace NugetAuditor.Lib
         private PackageId _packageId;
         private Artifact _artifact;
         private SCM _scm;
-        private IList<Vulnerability> _vulnerabilities;
+        private IEnumerable<Vulnerability> _vulnerabilities;
+        private IEnumerable<Vulnerability> _affectingVulnerabilities;
 
         public PackageId PackageId
         {
             get
             {
-                return _packageId;
+                return this._packageId;
+            }
+        }
+
+        public IEnumerable<Vulnerability> Vulnerabilities
+        {
+            get
+            {
+                if (this._vulnerabilities == null)
+                {
+                    this._vulnerabilities = Enumerable.Empty<Vulnerability>();
+                }
+                return this._vulnerabilities;
+            }
+        }
+
+        public IEnumerable<Vulnerability> AffectingVulnerabilities
+        {
+            get
+            {
+                if (_affectingVulnerabilities == null)
+                {
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+                    _affectingVulnerabilities = this.Vulnerabilities.Where(x => x.Versions.Any(r => SemVer.Range.IsSatisfied(r, this.PackageId.VersionString))).ToList();
+                    sw.Stop();                  
+                    System.Diagnostics.Trace.TraceInformation("Affecting elapsed for package {0}: {1}", this._packageId, sw.Elapsed);
+
+                }
+
+                return _affectingVulnerabilities;
             }
         }
 
@@ -48,28 +78,11 @@ namespace NugetAuditor.Lib
                     {
                         return AuditStatus.Vulnerable;
                     }
-
                 }
             }
         }
 
-        public IEnumerable<Vulnerability> AffectingVulnerabilities
-        {
-            get
-            {
-                return this.Vulnerabilities.Where(x => x.Versions.Any(r => SemVer.Range.IsSatisfied(r, this._packageId.Version)));
-            }
-        }
-
-        public IEnumerable<Vulnerability> Vulnerabilities
-        {
-            get
-            {
-                return this._vulnerabilities;
-            }
-        }
-
-        public AuditResult(PackageId packageId, Artifact artifact, SCM scm, IList<Vulnerability> vulnerabilities)
+        private AuditResult(PackageId packageId)
         {
             if (packageId == null)
             {
@@ -77,17 +90,14 @@ namespace NugetAuditor.Lib
             }
 
             this._packageId = packageId;
+        }
+
+        public AuditResult(PackageId packageId, Artifact artifact, SCM scm, IList<Vulnerability> vulnerabilities)
+            : this(packageId)
+        {
             this._artifact = artifact;
             this._scm = scm;
-
-            if (vulnerabilities == null)
-            {
-                this._vulnerabilities = new List<Vulnerability>();
-            }
-            else
-            {
-                this._vulnerabilities = new List<Vulnerability>(vulnerabilities);
-            }
+            this._vulnerabilities = vulnerabilities;
         }
     }    
 }

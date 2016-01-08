@@ -36,78 +36,95 @@ namespace NugetAuditor.ConsoleApp
                 Console.WriteLine();
             }
 
-
-
-            var auditResults = Lib.NugetAuditor.AuditPackages(packagePath, options.CacheSync);
-
-            var totalPackages = auditResults.Count();
-            var vulnerablePackages = 0;
-            var packageNum = 1;
-
-            foreach (var auditResult in auditResults)
+            try
             {
-                Console.Write("[{0}/{1}] ", packageNum++, totalPackages);
-                Console.Write("{0} {1} ", auditResult.PackageId.Id, auditResult.PackageId.Version);
+                var auditResults = Lib.NugetAuditor.AuditPackages(packagePath, options.CacheSync);
 
-                switch (auditResult.Status)
+                var totalPackages = auditResults.Count();
+                var vulnerablePackages = 0;
+                var packageNum = 1;
+
+                foreach (var auditResult in auditResults)
                 {
-                    case Lib.AuditStatus.UnknownPackage:
-                        {
-                            Console.ForegroundColor = ConsoleColor.Magenta;
-                            Console.WriteLine("Unknown package.");
-                            Console.ResetColor();
-                            break;
-                        }
-                    case Lib.AuditStatus.UnknownSource:
-                        {
-                            Console.ForegroundColor = ConsoleColor.Blue;
-                            Console.WriteLine("Unknown source for package.");
-                            Console.ResetColor();
-                            break;
-                        }
-                    case Lib.AuditStatus.NoKnownVulnerabilities:
-                        {
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine("No known vulnerabilities");
-                            Console.ResetColor();
-                            break;
-                        }
-                    case Lib.AuditStatus.KnownVulnerabilities:
-                        {
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
-                            Console.ResetColor();
-                            break;
-                        }
-                    case Lib.AuditStatus.Vulnerable:
-                        {
-                            vulnerablePackages++;
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("[VULNERABLE]");
-                            Console.ResetColor();
-                            Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
-                            
-                            foreach (var item in auditResult.AffectingVulnerabilities)
+                    Console.Write("[{0}/{1}] ", packageNum++, totalPackages);
+                    Console.Write("{0} {1} ", auditResult.PackageId.Id, auditResult.PackageId.VersionString);
+
+                    switch (auditResult.Status)
+                    {
+                        case Lib.AuditStatus.UnknownPackage:
                             {
-                                Console.WriteLine();
-                                Console.WriteLine(item.Title);
-                                Console.WriteLine(item.Summary);
+                                Console.ForegroundColor = ConsoleColor.Magenta;
+                                Console.WriteLine("Unknown package.");
+                                Console.ResetColor();
+                                break;
                             }
-                            break;
-                        }
+                        case Lib.AuditStatus.UnknownSource:
+                            {
+                                Console.ForegroundColor = ConsoleColor.Blue;
+                                Console.WriteLine("Unknown source for package.");
+                                Console.ResetColor();
+                                break;
+                            }
+                        case Lib.AuditStatus.NoKnownVulnerabilities:
+                            {
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("No known vulnerabilities");
+                                Console.ResetColor();
+                                break;
+                            }
+                        case Lib.AuditStatus.KnownVulnerabilities:
+                            {
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
+                                Console.ResetColor();
+                                break;
+                            }
+                        case Lib.AuditStatus.Vulnerable:
+                            {
+                                vulnerablePackages++;
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("[VULNERABLE]");
+                                Console.ResetColor();
+                                Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
+
+                                foreach (var item in auditResult.AffectingVulnerabilities)
+                                {
+                                    Console.WriteLine();
+                                    Console.WriteLine(item.Title);
+                                    Console.WriteLine(item.Summary);
+                                }
+                                break;
+                            }
+                    }
+                }
+
+                Console.WriteLine();
+
+                if (options.Verbose)
+                {
+                    Console.WriteLine("Done auditing package file \"{0}\".", options.Package);
+                }
+
+                return vulnerablePackages;
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Failed: \"{0}\".", exception.Message);
+                Console.ResetColor();
+                Console.WriteLine();
+
+                return -3;
+            }
+            finally
+            {
+                if (options.Verbose)
+                {
+                    Console.WriteLine("Press any key to exit.");
+                    Console.ReadLine();
                 }
             }
-
-            Console.WriteLine();
-
-            if (options.Verbose)
-            {
-                Console.WriteLine("Done auditing package file \"{0}\".", options.Package);
-                Console.WriteLine("Press any key to exit.");
-                Console.ReadLine();
-            }
-
-            return vulnerablePackages;
         }
     }
 }

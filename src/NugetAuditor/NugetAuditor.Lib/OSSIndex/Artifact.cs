@@ -37,9 +37,9 @@ namespace NugetAuditor.Lib.OSSIndex
 		public string Description { get; set; }
 		public string PackageManager { get; set; }
 		public string Package { get; set; }
-		public long PackageId { get; set; }
+		public long? PackageId { get; set; }
 		public string Scm { get; set; }
-		public long ScmId { get; set; }
+		public long? ScmId { get; set; }
 		public string Url { get; set; }
 		public string Details { get; set; }
 		public string Dependencies { get; set; }

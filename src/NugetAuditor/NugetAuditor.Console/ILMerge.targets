@@ -1,21 +1,21 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <PropertyGroup>
+  <!-- PropertyGroup>
     <ILMergeOut>C:\Work\Kiss\vorsecurity\dist\audit-net.exe</ILMergeOut>
-  </PropertyGroup>
+  </PropertyGroup -->
   
   <PropertyGroup>
     <ILMergePath Condition="'$(ILMergePath)'==''">$(SolutionDir)packages\ILMerge.2.14.1208\tools\ilmerge.exe</ILMergePath>
     <ILMergeOut Condition="'$(ILMergeOut)'==''">$(TargetDir)audit-net.exe</ILMergeOut>
   </PropertyGroup>
   
-  <Target Name="AfterResolveReferences" Condition=" '$(Configuration)' == 'Release' ">
+  <Target Name="AfterResolveReferences" Condition=" '$(Configuration)' == 'Debug' ">
     <ResolveAssemblyReference AssemblyFiles="@(_ResolvedProjectReferencePaths)" SearchPaths="$(AssemblySearchPaths)">
       <Output TaskParameter="ResolvedDependencyFiles" ItemName="ReferencePath" />
     </ResolveAssemblyReference>
   </Target>
 
-  <Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release' ">
+  <Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Debug' ">
     <CreateItem Include="@(ReferencePath)" Condition="'%(CopyLocal)'=='true'">
       <Output TaskParameter="Include" ItemName="ILMergeAssemblies" />
     </CreateItem>

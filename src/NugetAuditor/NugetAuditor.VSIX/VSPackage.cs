@@ -87,6 +87,11 @@ namespace NugetAuditor.VSIX
             }
         }
 
+        public static void AssertOnMainThread()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread("AssertOnMainThread");
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VSPackage"/> class.
         /// </summary>

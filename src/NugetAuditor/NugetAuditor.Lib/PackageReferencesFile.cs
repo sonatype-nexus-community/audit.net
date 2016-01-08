@@ -45,8 +45,7 @@ namespace NugetAuditor.Lib
                 return new PackageReference
                 (
                     x.GetAttributeValue("id", string.Empty),
-                    x.GetAttributeValue("version", string.Empty),
-                    x.GetAttributeValue("allowedVersions", string.Empty)
+                    x.GetAttributeValue("version", string.Empty)
                 )
                 {
                     File = this.Path,

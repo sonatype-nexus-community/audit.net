@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NuGet.Versioning;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,28 +9,40 @@ namespace NugetAuditor.Lib
 {
     public class PackageId 
     {
+        private string _originalVersion;
+
         public string Id
         {
             get;
             private set;
         }
 
-        public string Version
+        public NuGetVersion Version
         {
             get;
             private set;
         }
 
+        public string VersionString
+        {
+            get
+            {
+                return this._originalVersion;
+                //return this.Version.ToNormalizedString();
+            }
+        }
+
         public PackageId(string id, string version)
+            :this(id, NuGetVersion.Parse(version))
+        {
+            this._originalVersion = version;
+        }
+
+        private PackageId(string id, NuGetVersion version)
         {
             this.Id = id;
             this.Version = version;
         }
-
-        //public static PackageId FromString(string id, string version)
-        //{
-        //    return new PackageId(id, version);
-        //}
 
         public override bool Equals(object obj)
         {

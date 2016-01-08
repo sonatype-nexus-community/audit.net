@@ -12,7 +12,7 @@ namespace NugetAuditor.Lib
         KnownVulnerabilities,
         Vulnerable,
         UnknownSource,
-        UnknownPackage
+        UnknownPackage,
     }
 }
                     

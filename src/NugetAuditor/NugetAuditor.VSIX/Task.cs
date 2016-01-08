@@ -16,7 +16,7 @@ namespace NugetAuditor.VSIX
 
         private TaskProvider owner;
         private IVsUserContext context;
-        private IDictionary<int, string> customColumns = new Dictionary<int, string>();
+        //private IDictionary<int, string> customColumns = new Dictionary<int, string>();
 
         public event EventHandler<EventArgs> Help;
         public event EventHandler<CancelEventArgs> Navigate;
@@ -173,6 +173,15 @@ namespace NugetAuditor.VSIX
 
         public int GetColumnValue(int iField, out uint ptvtType, out uint ptvfFlags, out object pvarValue, out string pbstrAccessibilityName)
         {
+            //if (iField == 2)
+            //{
+            //    ptvtType = (uint)__VSTASKVALUETYPE.TVT_TEXT;
+            //    ptvfFlags = (uint)__VSTASKVALUEFLAGS.TVF_HORZ_RIGHT;
+            //    pvarValue = "test";
+            //    pbstrAccessibilityName = "test";
+            //    return VSConstants.S_OK;
+            //}
+
             ptvtType = 0;
             ptvfFlags = 0;
             pvarValue = null;
@@ -240,18 +249,21 @@ namespace NugetAuditor.VSIX
             return VSConstants.E_NOTIMPL;
         }
 
-        public int GetHierarchy(out IVsHierarchy ppProject)
+        #region IVsErrorItem
+
+        int IVsErrorItem.GetHierarchy(out IVsHierarchy ppProject)
         {
-            ppProject =  HierarchyItem;
+            ppProject = HierarchyItem;
             return VSConstants.S_OK;
         }
 
-        public int GetCategory(out uint pCategory)
+        int IVsErrorItem.GetCategory(out uint pCategory)
         {
             pCategory = (uint)(__VSERRORCATEGORY)ErrorCategory;
             return VSConstants.S_OK;
         }
 
+        #endregion
 
         #region IVsTaskItem2
 
@@ -364,18 +376,18 @@ namespace NugetAuditor.VSIX
 
         int IVsTaskItem2.put_CustomColumnText(ref Guid guidView, uint iCustomColumnIndex, string bstrText)
         {
-            customColumns[(int)iCustomColumnIndex] = bstrText;
-            return VSConstants.S_OK;
+            //customColumns[(int)iCustomColumnIndex] = bstrText;
+            return VSConstants.E_NOTIMPL;
         }
 
         int IVsTaskItem2.get_CustomColumnText(ref Guid guidView, uint iCustomColumnIndex, out string pbstrText)
         {
-            if (customColumns.TryGetValue((int)iCustomColumnIndex, out pbstrText))
-            {
-                return VSConstants.S_OK;
-            }
-
-            return VSConstants.E_INVALIDARG;
+            //if (customColumns.TryGetValue((int)iCustomColumnIndex, out pbstrText))
+            //{
+            //    return VSConstants.S_OK;
+            //}
+            pbstrText = null;
+            return VSConstants.E_NOTIMPL;
         }
 
         #endregion
@@ -426,8 +438,8 @@ namespace NugetAuditor.VSIX
 
         int IVsTaskItem.put_Checked(int fChecked)
         {
-            Checked = (fChecked > 0);
-            return VSConstants.S_OK;
+            //Checked = (fChecked > 0);
+            return VSConstants.E_NOTIMPL;
         }
 
         int IVsTaskItem.get_Text(out string pbstrName)
@@ -438,12 +450,12 @@ namespace NugetAuditor.VSIX
 
         int IVsTaskItem.put_Text(string bstrName)
         {
-            if (bstrName != null)
-            {
-                Text = bstrName;
-                return VSConstants.S_OK;
-            }
-            return VSConstants.E_INVALIDARG;
+            //if (bstrName != null)
+            //{
+            //    Text = bstrName;
+            //    return VSConstants.S_OK;
+            //}
+            return VSConstants.E_NOTIMPL;
         }
 
         int IVsTaskItem.Document(out string pbstrMkDocument)
@@ -474,8 +486,8 @@ namespace NugetAuditor.VSIX
         {
             switch (field)
             {
-                case VSTASKFIELD.FLD_CHECKED: pfReadOnly = 0; break;
-                case VSTASKFIELD.FLD_PRIORITY: pfReadOnly = 0; break;
+                //case VSTASKFIELD.FLD_CHECKED: pfReadOnly = 0; break;
+                //case VSTASKFIELD.FLD_PRIORITY: pfReadOnly = 0; break;
                 default: pfReadOnly = 1; break;
             }
             return VSConstants.S_OK;
@@ -483,8 +495,8 @@ namespace NugetAuditor.VSIX
 
         int IVsTaskItem.HasHelp(out int pfHasHelp)
         {
-            pfHasHelp = (string.IsNullOrEmpty(HelpKeyword)) ? 0 : 1;
-            return VSConstants.S_OK;
+            pfHasHelp = 0;
+            return VSConstants.E_NOTIMPL;
         }
 
         int IVsTaskItem.NavigateTo()

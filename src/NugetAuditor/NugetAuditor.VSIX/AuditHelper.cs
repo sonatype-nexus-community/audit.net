@@ -112,10 +112,8 @@ namespace NugetAuditor.VSIX
             return UnloadedProjectTypeGuid.Equals(project.Kind, StringComparison.OrdinalIgnoreCase);
         }
 
-        internal static IEnumerable<Project> GetAllSupportedProjects()
+        internal static IEnumerable<Project> GetAllSupportedProjects(Solution solution)
         {
-            var solution = ServiceLocator.GetInstance<DTE>().Solution;
-
             if (solution == null || !solution.IsOpen)
             {
                 yield break;
@@ -162,6 +160,11 @@ namespace NugetAuditor.VSIX
                     }
                 }
             }
+        }
+
+        internal static string GetSolutionName(Solution solution)
+        {
+            return (string)solution.Properties.Item("Name").Value;
         }
     }
 }

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NugetAuditor.Lib.OSSIndex
 {
-    public class ApiClient : ApiClientBase, IApiClient
+    internal class ApiClient : ApiClientBase, IApiClient
     {
         private int _pageSize = 100;
 
@@ -21,9 +21,17 @@ namespace NugetAuditor.Lib.OSSIndex
             : base("https://ossindex.net/v1.0", cachePolicy)
         { }
 
+        private void BeforeSerialization(IRestResponse response)
+        {
+            if (response.StatusCode == HttpStatusCode.InternalServerError)
+            {
+                throw new ApiClientException(string.Format("Unexpected response status {0}", (int)response.StatusCode));
+            }
+        }
+
         public IList<Artifact> SearchArtifacts(IEnumerable<ArtifactSearch> searches)
         {
-            var artifacts = new List<Artifact>(searches.Count());
+            var result = new List<Artifact>(searches.Count());
 
             while (searches.Any())
             {
@@ -31,29 +39,49 @@ namespace NugetAuditor.Lib.OSSIndex
 
                 request.Resource = "search/artifact/";
                 request.RequestFormat = DataFormat.Json;
-
+                request.OnBeforeDeserialization = BeforeSerialization;
                 request.AddBody(searches.Take(this._pageSize));
 
-                artifacts.AddRange(Execute<List<Artifact>>(request));
+                var response = Execute<ArtifactResponse>(request);
+
+                if (response.ResponseStatus == ResponseStatus.Error)
+                {
+                    throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+                }
+
+                result.AddRange(response.Data);
 
                 searches = searches.Skip(this._pageSize);
             }
 
-            return artifacts;
+            return result;
         }
 
         public IList<Artifact> SearchArtifact(ArtifactSearch search)
+        {
+            return SearchArtifact(search.pm, search.name, search.version);
+        }
+
+        public IList<Artifact> SearchArtifact(string pm, string name, string version)
         {
             var request = new RestRequest(Method.GET);
 
             request.Resource = "search/artifact/{pm}/{name}/{version}";
             request.RequestFormat = DataFormat.Json;
+            request.OnBeforeDeserialization = BeforeSerialization;
 
-            request.AddParameter("pm", search.pm, ParameterType.UrlSegment);
-            request.AddParameter("name", search.name, ParameterType.UrlSegment);
-            request.AddParameter("version", search.version, ParameterType.UrlSegment);
+            request.AddParameter("pm", pm, ParameterType.UrlSegment);
+            request.AddParameter("name", name, ParameterType.UrlSegment);
+            request.AddParameter("version", version, ParameterType.UrlSegment);
 
-            return Execute<List<Artifact>>(request);            
+            var response = Execute<ArtifactResponse>(request);
+
+            if (response.ResponseStatus == ResponseStatus.Error)
+            {
+                throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+            }
+
+            return response.Data;
         }
 
         public IList<SCM> GetSCMs(IEnumerable<long> scmIds)
@@ -66,10 +94,18 @@ namespace NugetAuditor.Lib.OSSIndex
 
                 request.Resource = "scm/{id}";
                 request.RequestFormat = DataFormat.Json;
+                request.OnBeforeDeserialization = BeforeSerialization;
 
                 request.AddParameter("id", string.Join(",", scmIds.Take(this._pageSize)), ParameterType.UrlSegment);
 
-                scms.AddRange(Execute<List<SCM>>(request));
+                var response = Execute<SCMResponse>(request);
+
+                if (response.ResponseStatus == ResponseStatus.Error)
+                {
+                    throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+                }
+
+                scms.AddRange(response.Data);
 
                 scmIds = scmIds.Skip(this._pageSize);
             }
@@ -77,14 +113,41 @@ namespace NugetAuditor.Lib.OSSIndex
             return scms;
         }
 
-        public IList<Vulnerability> GetScmVulnerabilities(long scmId)
+        public IList<SCM> GetSCM(long scmId)
+        {
+            var request = new RestRequest(Method.GET);
+
+            request.Resource = "scm/{id}";
+            request.RequestFormat = DataFormat.Json;
+            request.OnBeforeDeserialization = BeforeSerialization;
+
+            request.AddParameter("id", scmId.ToString(), ParameterType.UrlSegment);
+
+            var response = Execute<SCMResponse>(request);
+
+            if (response.ResponseStatus == ResponseStatus.Error)
+            {
+                throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+            }
+
+            return response.Data;
+        }
+
+        public IList<Vulnerability> GetVulnerabilities(long scmId)
         {
             var request = new RestRequest(Method.GET);
 
             request.Resource = "scm/{id}/vulnerabilities";
             request.AddParameter("id", scmId, ParameterType.UrlSegment);
 
-            return Execute<List<Vulnerability>>(request);
+            var response = Execute<VulnerabilityResponse>(request);
+
+            if (response.ResponseStatus == ResponseStatus.Error)
+            {
+                throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+            }
+
+            return response.Data;
         }      
     }
 }

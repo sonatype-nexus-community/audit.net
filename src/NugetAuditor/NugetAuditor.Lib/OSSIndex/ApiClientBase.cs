@@ -1,4 +1,5 @@
 ﻿using RestSharp;
+using RestSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,31 +21,66 @@ namespace NugetAuditor.Lib.OSSIndex
             this._baseUrl = baseUrl;
             this._cachePolicy = cachePolicy;
             this._restClient = new RestClient(this._baseUrl);
+            this._restClient.CachePolicy = cachePolicy;
         }
 
-        internal T Execute<T>(RestRequest request) where T : new()
+        private void BeforeSerialization(IRestResponse response)
         {
-            var cachePolicy = HttpWebRequest.DefaultCachePolicy;
+            if (response.StatusCode == HttpStatusCode.InternalServerError)
+            {
+                throw new ApiClientException(string.Format("Unexpected response status {0}", (int)response.StatusCode));
+            }
+        }
+
+        internal IRestResponse<T> Execute<T>(RestRequest request) where T : IApiResponse, new()
+        {
+            //var cachePolicy = HttpWebRequest.DefaultCachePolicy;
 
             try
             {
-                HttpWebRequest.DefaultCachePolicy = this._cachePolicy;
+                //HttpWebRequest.DefaultCachePolicy = this._cachePolicy;
 
-                var response = this._restClient.Execute<T>(request);
+                //request.OnBeforeDeserialization = BeforeSerialization;
+             
+                return this._restClient.Execute<T>(request);
 
-                if (response.ErrorException != null)
-                {
-                    const string message = "Error retrieving response. Check inner details for more info.";
-                    var apiException = new ApplicationException(message, response.ErrorException);
-                    throw apiException;
-                }
+                //return ParseResponseData(response);
 
-                return response.Data;
             }
             finally
             {
-                HttpWebRequest.DefaultCachePolicy = cachePolicy;
+            //    HttpWebRequest.DefaultCachePolicy = cachePolicy;
             }
+        }
+
+        //internal async Task<T> ExecuteAsync<T>(RestRequest request) where T : IApiResponse, new()
+        //{
+        //    var cachePolicy = HttpWebRequest.DefaultCachePolicy;
+
+        //    try
+        //    {
+        //        HttpWebRequest.DefaultCachePolicy = this._cachePolicy;
+
+        //        request.OnBeforeDeserialization = BeforeSerialization;
+
+        //        var response = await this._restClient.ExecuteTaskAsync<T>(request);
+
+        //        return ParseResponseData<T>(response);
+        //    }
+        //    finally
+        //    {
+        //        HttpWebRequest.DefaultCachePolicy = cachePolicy;
+        //    }
+        //}
+
+        private T ParseResponseData<T>(IRestResponse<T> response) where T : IApiResponse
+        {
+            if (response.ErrorException != null)
+            {
+                throw new ApiClientException(string.Format("Error retrieving response: \"{0}\"", response.ErrorMessage), response.ErrorException);
+            }
+
+            return response.Data;
         }
     }
 }

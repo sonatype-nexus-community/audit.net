@@ -16,7 +16,7 @@ using BaseTask = Microsoft.VisualStudio.Shell.Task;
 
 namespace NugetAuditor.VSIX
 {
-    public class AuditTaskProvider : TaskProvider
+    public class AuditTaskProvider : VSIX.TaskProvider
     {
         public AuditTaskProvider(IServiceProvider serviceProvider)
             :base(serviceProvider)
@@ -27,55 +27,36 @@ namespace NugetAuditor.VSIX
 
         public void AddResults(ProjectInfo projectInfo, IEnumerable<Lib.AuditResult> auditResults)
         {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
             foreach (var packageReference in projectInfo.PackageReferencesFile.GetPackageReferences())
             {
                 var auditResult = auditResults.Where(x => x.PackageId.Equals(packageReference)).FirstOrDefault();
 
-                if (auditResult == null )
+                if (auditResult == null 
+                    || auditResult.Status ==  AuditStatus.NoKnownVulnerabilities 
+                    || auditResult.Status == AuditStatus.UnknownPackage
+                    || auditResult.Status == AuditStatus.UnknownSource)
                 {
                     continue;
                 }
 
-                switch (auditResult.Status)
+                foreach (var vulnerability in auditResult.Vulnerabilities)
                 {
-                    case Lib.AuditStatus.NoKnownVulnerabilities:
-                    case Lib.AuditStatus.UnknownPackage:
-                    case Lib.AuditStatus.UnknownSource:
-                        {
-                            continue;
-                        }
-                    case Lib.AuditStatus.KnownVulnerabilities:
-                        {
-                            foreach (var vulnerability in auditResult.Vulnerabilities)
-                            {
-                                var auditTask = new AuditTask(auditResult, packageReference)
-                                {
-                                    ErrorCategory = TaskErrorCategory.Message,
-                                    Text = vulnerability.Summary,
-                                    HierarchyItem = projectInfo.ProjectHierarchy
-                                };
+                    var task = new VulnerabilityTask(vulnerability, packageReference)
+                    {
+                        ErrorCategory = auditResult.AffectingVulnerabilities.Contains(vulnerability) ? TaskErrorCategory.Error : TaskErrorCategory.Message,
+                        Text = string.Format("{0}\n{1}", vulnerability.Title, vulnerability.Summary),
+                        HierarchyItem = projectInfo.ProjectHierarchy,
+                        HelpKeyword = vulnerability.CveId,
+                    };
 
-                                Tasks.Add(auditTask);
-                            }
-                            break;
-                        }
-                    case Lib.AuditStatus.Vulnerable:
-                        {
-                            foreach (var vulnerability in auditResult.AffectingVulnerabilities)
-                            {
-                                var auditTask = new AuditTask(auditResult, packageReference)
-                                {
-                                    ErrorCategory = TaskErrorCategory.Error,
-                                    Text = vulnerability.Summary,
-                                    HierarchyItem = projectInfo.ProjectHierarchy
-                                };
-
-                                Tasks.Add(auditTask);
-                            }
-                            break;
-                        }
+                    Tasks.Add(task);
                 }
             }
+
+            watch.Stop();
+            System.Diagnostics.Trace.TraceInformation("Elapsed AddResults: {0}", watch.Elapsed);
         }
 
         public IEnumerable<T> GetTasks<T>() where T : VSIX.Task

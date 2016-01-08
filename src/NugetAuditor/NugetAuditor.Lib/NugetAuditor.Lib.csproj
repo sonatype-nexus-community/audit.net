@@ -22,7 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -44,6 +44,10 @@
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.0\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="NuGet.Versioning, Version=3.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\NuGet.Versioning.3.3.0\lib\net45\NuGet.Versioning.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="RestSharp, Version=100.0.0.0, Culture=neutral, PublicKeyToken=598062e77f915f75, processorArchitecture=MSIL">
       <HintPath>..\packages\RestSharpSigned.105.2.3\lib\net45\RestSharp.dll</HintPath>
       <Private>True</Private>
@@ -62,12 +66,16 @@
   <ItemGroup>
     <Compile Include="Extensions.cs" />
     <Compile Include="Location.cs" />
+    <Compile Include="OSSIndex\ApiError.cs" />
+    <Compile Include="OSSIndex\ApiClientException.cs" />
+    <Compile Include="OSSIndex\ApiResponse.cs" />
     <Compile Include="OSSIndex\Artifact.cs" />
     <Compile Include="ArtifactSearch.cs" />
     <Compile Include="AuditResult.cs" />
     <Compile Include="AuditStatus.cs" />
     <Compile Include="NugetAuditor.cs" />
     <Compile Include="OSSIndex\ApiClientBase.cs" />
+    <Compile Include="OSSIndex\ApiResponses.cs" />
     <Compile Include="OSSIndex\IApiClient.cs" />
     <Compile Include="OSSIndex\ApiClient.cs" />
     <Compile Include="PackageId.cs" />
@@ -91,6 +99,9 @@
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PreBuildEvent>"$(SolutionDir)packages\Brutal.Dev.StrongNameSigner.1.5.1\tools\StrongNameSigner.Console.exe" -in "$(SolutionDir)packages\SemanticVersioning.0.6.2.0"</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
