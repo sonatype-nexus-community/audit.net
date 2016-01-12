@@ -27,8 +27,7 @@ namespace NugetAuditor.Lib
         {
             get
             {
-                return this._originalVersion;
-                //return this.Version.ToNormalizedString();
+                return this.Version.ToNormalizedString();
             }
         }
 
@@ -53,7 +52,7 @@ namespace NugetAuditor.Lib
                 return false;
             }
 
-            return (this.Id.Equals(other.Id, StringComparison.OrdinalIgnoreCase) && this.Version.Equals(other.Version));
+            return (this.Id.Equals(other.Id, StringComparison.OrdinalIgnoreCase) && this.VersionString.Equals(other.VersionString, StringComparison.OrdinalIgnoreCase));
         }
 
         public override int GetHashCode()

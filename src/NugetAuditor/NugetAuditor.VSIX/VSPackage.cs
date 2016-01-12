@@ -5,26 +5,14 @@
 //------------------------------------------------------------------------------
 
 using System;
-using System.Linq;
 using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.Win32;
-using NuGet.VisualStudio;
-using Microsoft.VisualStudio.ComponentModelHost;
-using NugetAuditor.VSIX.EventSinks;
-using Microsoft.VisualStudio.TextManager.Interop;
 using EnvDTE;
-using System.Collections.Generic;
 using System.Threading;
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell.TableManager;
 
 namespace NugetAuditor.VSIX
 {
@@ -63,19 +51,24 @@ namespace NugetAuditor.VSIX
 
         private IVsMonitorSelection _vsMonitorSelection;
 
-        private IVsMonitorSelection MonitorSelection
+        internal IVsMonitorSelection MonitorSelection
         {
             get
             {
                 if (this._vsMonitorSelection == null)
                 {
                     this._vsMonitorSelection = ServiceLocator.GetInstance<IVsMonitorSelection>();
+
+                    if (this._vsMonitorSelection == null)
+                    {
+                        throw new InvalidOperationException(string.Format(Properties.Resources.Culture, Properties.Resources.General_MissingService, typeof(IVsMonitorSelection).FullName));
+                    }
                 }
                 return this._vsMonitorSelection;
             }
         }
 
-        private NugetAuditManager AuditManager
+        internal NugetAuditManager AuditManager
         {
             get
             {
@@ -140,11 +133,6 @@ namespace NugetAuditor.VSIX
             AddMenuCommandHandlers();
         }
 
-        private void OnSolutionOpened(object sender, EventArgs e)
-        {
-            AuditManager.AuditSolutionPackages();
-        }
-       
         private void AddMenuCommandHandlers()
         {
             var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
@@ -219,33 +207,12 @@ namespace NugetAuditor.VSIX
 
         private void InvokeAuditPackagesHandler(object sender, EventArgs e)
         {
-            Project project = ActiveLoadedSupportedProject;
-
-            if (project != null)
-            {
-                AuditManager.AuditProjectPackages(project);
-            }
+            AuditManager.AuditProjectPackages(ActiveLoadedSupportedProject);
         }
         
         private void InvokeAuditPackagesForSolutionHandler(object sender, EventArgs e)
         {
             AuditManager.AuditSolutionPackages();
-        }
-
-        public string GetResourceString(string resourceName)
-        {
-            string resourceValue;
-
-            IVsResourceManager resourceManager = (IVsResourceManager)GetService(typeof(SVsResourceManager));
-
-            if (resourceManager == null)
-            {
-                throw new InvalidOperationException("Could not get SVsResourceManager service. Make sure that the package is sited before calling this method");
-            }
-            Guid packageGuid = this.GetType().GUID;
-            ErrorHandler.ThrowOnFailure(resourceManager.LoadResourceString(ref packageGuid, -1, resourceName, out resourceValue));
-
-            return resourceValue;
         }
 
         protected override void Dispose(bool disposing)
@@ -271,7 +238,5 @@ namespace NugetAuditor.VSIX
                 base.Dispose(disposing);
             }
         }
-
-     
     }
 }

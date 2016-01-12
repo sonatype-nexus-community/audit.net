@@ -18,10 +18,10 @@ namespace NugetAuditor.VSIX
 
         /// <summary>
         /// Creates a new instance of <see cref="AuditCompletedEventArgs"/> by the given
-        /// <see cref="AuditRunnerResult"/> and <see cref="Exception"/>.
+        /// <see cref="Lib.AuditResult"/> and <see cref="Exception"/>.
         /// </summary>
-        /// <param name="result">Contains the result returned by Clone Detective.</param>
-        /// <param name="exception">If an error occured running Clone Detective
+        /// <param name="result">Contains the result returned by audit.</param>
+        /// <param name="exception">If an error occured running audit
         /// <paramref name="exception"/> refers to the <see cref="System.Exception"/>.</param>
         public AuditCompletedEventArgs(IEnumerable<Lib.AuditResult> results, Exception exception)
         {
@@ -30,7 +30,7 @@ namespace NugetAuditor.VSIX
         }
 
         /// <summary>
-        /// Gets the <see cref="AuditRunnerResult"/>.
+        /// Gets the <see cref="Lib.AuditResult"/>.
         /// </summary>
         public IEnumerable<Lib.AuditResult> Results
         {
@@ -38,7 +38,7 @@ namespace NugetAuditor.VSIX
         }
 
         /// <summary>
-        /// Gets the exception (if any) that was raised while running the clone detective. If
+        /// Gets the exception (if any) that was raised while running the auditor. If
         /// no error occurred the return value is <see langword="null"/>.
         /// </summary>
         public Exception Exception
