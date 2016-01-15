@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 
 namespace NugetAuditor.Lib.OSSIndex
 {
+    [Serializable]
     public class ApiClientException : Exception
     {
         const string apiErrorMessage = "Unexpected server response! (Code: {0}, Error: {1})";

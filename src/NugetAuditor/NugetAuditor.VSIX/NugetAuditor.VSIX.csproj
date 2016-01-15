@@ -100,8 +100,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\OSSAuditPackage.ico" />
     <Content Include="Resources\Toolbar.png" />
+    <Content Include="Resources\OSSAuditPackage.ico" />
     <Content Include="stylesheet.css" />
   </ItemGroup>
   <ItemGroup>

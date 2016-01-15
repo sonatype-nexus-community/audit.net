@@ -62,7 +62,7 @@
   <Symbols>
     <GuidSymbol name="guidAuditPkg" value="{6f208d03-bc05-4a29-b715-0460c9023754}" />
     <GuidSymbol name="guidToolbarImages" value="{e498b87c-cc45-4a9d-bfee-1924f3f8e3ef}" >
-      <IDSymbol name="bmpAuditNuGetPackage" value="6" />
+      <IDSymbol name="bmpAuditNuGetPackage" value="1" />
     </GuidSymbol>
     <GuidSymbol name="guidAuditCmdSet" value="{90c8506f-9b1d-40ae-862d-5bfe33e674c0}">
       <IDSymbol name="cmdidAuditPackages" value="0x0100" />
