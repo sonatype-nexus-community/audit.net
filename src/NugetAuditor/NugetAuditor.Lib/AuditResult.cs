@@ -13,8 +13,7 @@ namespace NugetAuditor.Lib
         private Artifact _artifact;
         private SCM _scm;
         private IEnumerable<Vulnerability> _vulnerabilities;
-        private IEnumerable<Vulnerability> _affectingVulnerabilities;
-
+        
         public PackageId PackageId
         {
             get
@@ -39,16 +38,29 @@ namespace NugetAuditor.Lib
         {
             get
             {
-                if (_affectingVulnerabilities == null)
-                {
-                    var sw = System.Diagnostics.Stopwatch.StartNew();
-                    _affectingVulnerabilities = this.Vulnerabilities.Where(x => x.Versions.Any(r => SemVer.Range.IsSatisfied(r, this.PackageId.VersionString))).ToList();
-                    sw.Stop();                  
-                    System.Diagnostics.Trace.TraceInformation("Affecting elapsed for package {0}: {1}", this._packageId, sw.Elapsed);
+                var sw = System.Diagnostics.Stopwatch.StartNew();
 
-                }
+                var res = this.Vulnerabilities.Where(x => x.AffectsVersion(this.PackageId.VersionString));
 
-                return _affectingVulnerabilities;
+                sw.Stop();
+
+                System.Diagnostics.Trace.TraceInformation("Affecting elapsed for package {0}: {1}", this._packageId, sw.Elapsed);
+
+                return res;
+
+                //if (_affectingVulnerabilities == null)
+                //{
+                //    var sw = System.Diagnostics.Stopwatch.StartNew();
+
+                //    _affectingVulnerabilities = this.Vulnerabilities.Where(x => x.AffectsVersion(this.PackageId.VersionString));
+                    
+                //    sw.Stop();
+
+                //    System.Diagnostics.Trace.TraceInformation("Affecting elapsed for package {0}: {1}", this._packageId, sw.Elapsed);
+
+                //}
+
+                //return _affectingVulnerabilities;
             }
         }
 
@@ -70,14 +82,16 @@ namespace NugetAuditor.Lib
                 }
                 else
                 {
-                    if (!this.AffectingVulnerabilities.Any())
-                    {
-                        return AuditStatus.KnownVulnerabilities;
-                    }
-                    else
-                    {
-                        return AuditStatus.Vulnerable;
-                    }
+                    return AuditStatus.HasVulnerabilities;
+
+                    //if (!this.AffectingVulnerabilities.Any())
+                    //{
+                    //    return AuditStatus.HasVulnerabilities;
+                    //}
+                    //else
+                    //{
+                    //    return AuditStatus.Vulnerable;
+                    //}
                 }
             }
         }

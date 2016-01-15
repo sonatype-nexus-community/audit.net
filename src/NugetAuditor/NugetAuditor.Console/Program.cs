@@ -72,20 +72,19 @@ namespace NugetAuditor.ConsoleApp
                                 Console.ResetColor();
                                 break;
                             }
-                        case Lib.AuditStatus.KnownVulnerabilities:
+                        case Lib.AuditStatus.HasVulnerabilities:
                             {
+                                if (auditResult.AffectingVulnerabilities.Any())
+                                {
+                                    vulnerablePackages++;
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine("[VULNERABLE]");
+                                    Console.ResetColor();
+                                }
+
                                 Console.ForegroundColor = ConsoleColor.Yellow;
                                 Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
                                 Console.ResetColor();
-                                break;
-                            }
-                        case Lib.AuditStatus.Vulnerable:
-                            {
-                                vulnerablePackages++;
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine("[VULNERABLE]");
-                                Console.ResetColor();
-                                Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
 
                                 foreach (var item in auditResult.AffectingVulnerabilities)
                                 {
@@ -93,8 +92,25 @@ namespace NugetAuditor.ConsoleApp
                                     Console.WriteLine(item.Title);
                                     Console.WriteLine(item.Summary);
                                 }
+
                                 break;
                             }
+                        //case Lib.AuditStatus.Vulnerable:
+                        //    {
+                        //        vulnerablePackages++;
+                        //        Console.ForegroundColor = ConsoleColor.Red;
+                        //        Console.WriteLine("[VULNERABLE]");
+                        //        Console.ResetColor();
+                        //        Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
+
+                        //        foreach (var item in auditResult.AffectingVulnerabilities)
+                        //        {
+                        //            Console.WriteLine();
+                        //            Console.WriteLine(item.Title);
+                        //            Console.WriteLine(item.Summary);
+                        //        }
+                        //        break;
+                        //    }
                     }
                 }
 
