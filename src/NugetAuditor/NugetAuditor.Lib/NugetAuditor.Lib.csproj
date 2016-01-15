@@ -37,7 +37,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>NugetAuditor.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\NugetAuditor.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Web.XmlTransform, Version=2.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -64,6 +64,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\VersionInfo.cs">
+      <Link>Properties\VersionInfo.cs</Link>
+    </Compile>
     <Compile Include="Extensions.cs" />
     <Compile Include="Location.cs" />
     <Compile Include="OSSIndex\ApiError.cs" />
@@ -86,7 +89,12 @@
     <Compile Include="OSSIndex\Vulnerability.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="NugetAuditor.snk" />
+    <None Include="..\NugetAuditor.snk">
+      <Link>NugetAuditor.snk</Link>
+    </None>
+    <None Include="..\NugetAuditor.VSIX.licenseheader">
+      <Link>NugetAuditor.VSIX.licenseheader</Link>
+    </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

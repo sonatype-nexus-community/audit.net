@@ -1,8 +1,29 @@
-﻿//------------------------------------------------------------------------------
-// <copyright file="VSPackage1.cs" company="Company">
-//     Copyright (c) Company.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿#region License
+// Copyright (c) 2015-2016, Vör Security Ltd.
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in the
+//       documentation and/or other materials provided with the distribution.
+//     * Neither the name of Vör Security, OSS Index, nor the
+//       names of its contributors may be used to endorse or promote products
+//       derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL VÖR SECURITY BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#endregion
 
 using System;
 using System.ComponentModel.Design;
@@ -13,6 +34,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using EnvDTE;
 using System.Threading;
+using NugetAuditor.VSIX.Properties;
 
 namespace NugetAuditor.VSIX
 {
@@ -39,16 +61,12 @@ namespace NugetAuditor.VSIX
     [ProvideAutoLoad(Microsoft.VisualStudio.Shell.Interop.UIContextGuids.SolutionExists)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
-    public sealed class VSPackage : Package
+    public sealed class VSPackage : Package, IDisposable
     {
         private static VSPackage _instance;
-
         private NugetAuditManager _auditManager;
-
         private SynchronizationContext _uiCtx;
-       
         private uint _solutionNotBuildingAndNotDebuggingContextCookie;
-
         private IVsMonitorSelection _vsMonitorSelection;
 
         internal IVsMonitorSelection MonitorSelection
@@ -61,7 +79,7 @@ namespace NugetAuditor.VSIX
 
                     if (this._vsMonitorSelection == null)
                     {
-                        throw new InvalidOperationException(string.Format(Properties.Resources.Culture, Properties.Resources.General_MissingService, typeof(IVsMonitorSelection).FullName));
+                        throw new InvalidOperationException(string.Format(Resources.Culture, Resources.General_MissingService, typeof(IVsMonitorSelection).FullName));
                     }
                 }
                 return this._vsMonitorSelection;
@@ -192,11 +210,11 @@ namespace NugetAuditor.VSIX
         {
             get
             {
-                var project = AuditHelper.GetActiveProject(MonitorSelection);
+                var project = VsUtility.GetActiveProject(MonitorSelection);
 
                 if (project != null 
-                    && !AuditHelper.IsProjectUnloaded(project)
-                    && AuditHelper.IsProjectSupported(project))
+                    && !VsUtility.IsProjectUnloaded(project)
+                    && VsUtility.IsProjectSupported(project))
                 {
                     return project;
                 }
@@ -237,6 +255,11 @@ namespace NugetAuditor.VSIX
             {
                 base.Dispose(disposing);
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
         }
     }
 }

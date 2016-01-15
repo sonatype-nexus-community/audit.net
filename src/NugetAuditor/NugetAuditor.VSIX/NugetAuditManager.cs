@@ -1,4 +1,31 @@
-﻿using EnvDTE;
+﻿#region License
+// Copyright (c) 2015-2016, Vör Security Ltd.
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in the
+//       documentation and/or other materials provided with the distribution.
+//     * Neither the name of Vör Security, OSS Index, nor the
+//       names of its contributors may be used to endorse or promote products
+//       derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL VÖR SECURITY BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#endregion
+
+using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using NugetAuditor.Lib;
@@ -9,7 +36,7 @@ using System.Linq;
 using System.Threading;
 using NuGet.VisualStudio;
 using Microsoft.VisualStudio;
-using NuGet.Versioning;
+using NugetAuditor.VSIX.Properties;
 
 namespace NugetAuditor.VSIX
 {
@@ -50,7 +77,7 @@ namespace NugetAuditor.VSIX
 
             if (_packageInstallerEvents == null)
             {
-                throw new InvalidOperationException(string.Format(Properties.Resources.Culture, Properties.Resources.General_MissingService, typeof(IVsPackageInstallerEvents).FullName));
+                throw new InvalidOperationException(string.Format(Resources.Culture, Resources.General_MissingService, typeof(IVsPackageInstallerEvents).FullName));
             }
 
             _packageInstallerEvents.PackageReferenceAdded += InstallerEvents_PackageReferenceAdded;
@@ -60,7 +87,7 @@ namespace NugetAuditor.VSIX
 
             if (_dte == null)
             {
-                throw new InvalidOperationException(string.Format(Properties.Resources.Culture, Properties.Resources.General_MissingService, typeof(DTE).FullName));
+                throw new InvalidOperationException(string.Format(Resources.Culture, Resources.General_MissingService, typeof(DTE).FullName));
             }
 
             _documentEvents = _dte.Events.DocumentEvents;
@@ -233,7 +260,7 @@ namespace NugetAuditor.VSIX
 
             if (e.Exception != null)
             {
-                WriteLine(Properties.Resources.AuditingPackageError, e.Exception.Message);
+                WriteLine(Resources.AuditingPackageError, e.Exception.Message);
                 ExceptionHelper.WriteToActivityLog(e.Exception);
             }
             else
@@ -242,16 +269,16 @@ namespace NugetAuditor.VSIX
 
                 if (vulnerableCount > 0)
                 {
-                    WriteLine(Properties.Resources.VulnerabilitiesFound, vulnerableCount);
+                    WriteLine(Resources.VulnerabilitiesFound, vulnerableCount);
                 }
                 else
                 {
-                    WriteLine(Properties.Resources.NoVulnarebilitiesFound);
+                    WriteLine(Resources.NoVulnarebilitiesFound);
                 }
 
                 _taskProvider.SuspendRefresh();
 
-                foreach (Project project in AuditHelper.GetAllSupportedProjects(_dte.Solution))
+                foreach (Project project in VsUtility.GetAllSupportedProjects(_dte.Solution))
                 {
                     using (var projectInfo = new ProjectInfo(project))
                     {
@@ -273,7 +300,7 @@ namespace NugetAuditor.VSIX
         {
             ClearOutput(true);
 
-            WriteLine(Properties.Resources.AuditingPackage, package);
+            WriteLine(Resources.AuditingPackage, package);
 
             bool started = RunAudit(new[] { package }, OnAuditCompleted);
 
@@ -297,7 +324,7 @@ namespace NugetAuditor.VSIX
 
             var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages(project).ToList();
 
-            WriteLine(Properties.Resources.AuditingPackagesInProject, packages.Count, project.Name);
+            WriteLine(Resources.AuditingPackagesInProject, packages.Count, project.Name);
 
             bool started = RunAudit(packages, OnAuditCompleted);
 
@@ -321,9 +348,9 @@ namespace NugetAuditor.VSIX
 
             var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages().ToList();
 
-            var solutionName = AuditHelper.GetSolutionName(_dte.Solution);
+            var solutionName = VsUtility.GetSolutionName(_dte.Solution);
 
-            WriteLine(Properties.Resources.AuditingPackagesInSolution, packages.Count, solutionName);
+            WriteLine(Resources.AuditingPackagesInSolution, packages.Count, solutionName);
 
             bool started = RunAudit(packages, OnAuditCompleted);
 
@@ -432,16 +459,6 @@ namespace NugetAuditor.VSIX
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects).
-                    //if (_packageReferenceMarkerClients != null)
-                    //{
-                    //    foreach (var client in _packageReferenceMarkerClients.Values)
-                    //    {
-                    //        client.Dispose();
-                    //    }
-                    //    _packageReferenceMarkerClients.Clear();
-                    //}
-
                     if (_markerProvider != null)
                     {
                         _markerProvider.Dispose();

@@ -16,6 +16,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.ConsoleApp", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.VSIX", "NugetAuditor.VSIX\NugetAuditor.VSIX.csproj", "{E40798D3-E58C-48B7-949D-E114507F06A9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{4A29F90F-C695-4F93-A605-03C2131AC4C2}"
+	ProjectSection(SolutionItems) = preProject
+		NugetAuditor.VSIX.licenseheader = NugetAuditor.VSIX.licenseheader
+		VersionInfo.cs = VersionInfo.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

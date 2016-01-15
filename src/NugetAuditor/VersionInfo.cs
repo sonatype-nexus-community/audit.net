@@ -1,5 +1,4 @@
-﻿#region License
-// Copyright (c) 2015-2016, Vör Security Ltd.
+﻿// Copyright (c) 2015-2016, Vör Security Ltd.
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -23,19 +22,20 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
-namespace NugetAuditor.VSIX
-{
-    static class PkgCmdIDList
-    {
-        public const int cmdidAuditPackages = 0x100;
-        public const int cmdidAuditPackagesForSolution = 0x200;
-    }
-}
+// Version information for an assembly consists of the following four values:
+//
+//      Major Version
+//      Minor Version 
+//      Build Number
+//      Revision
+//
+// You can specify all the values or you can default the Build and Revision Numbers 
+// by using the '*' as shown below:
+// [assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
