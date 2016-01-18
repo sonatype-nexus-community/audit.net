@@ -39,13 +39,42 @@ namespace NugetAuditor.Lib
             }
         }
 
-        public string File { get; private set; }
-        public int StartLine { get; set; }
-        public int StartPos { get; set; }
-        public int EndLine { get; set; }
-        public int EndPos { get; set; }
-        public bool Ignore { get; set; }
+        public string File
+        {
+            get;
+            private set;
+        }
 
+        public int StartLine
+        {
+            get;
+            set;
+        }
+
+        public int StartPos
+        {
+            get;
+            set;
+        }
+
+        public int EndLine
+        {
+            get;
+            set;
+        }
+
+        public int EndPos
+        {
+            get;
+            set;
+        }
+
+        public bool Ignore
+        {
+            get;
+            set;
+        }
+               
         public PackageReference(string file, string id, string version) 
             : base(id, version)
         {

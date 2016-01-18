@@ -39,13 +39,12 @@ using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
 using System.Threading;
 using System.Windows.Forms;
+using System.IO;
 
 namespace NugetAuditor.VSIX
 {
     internal static class VsUtility
     {
-        internal const string UnloadedProjectTypeGuid = "{67294A52-A4F0-11D2-AA88-00C04F688DDE}";
-
         internal static IVsHierarchy GetProjectHierarchy(Project project)
         {
             IVsHierarchy hierarchy = null;
@@ -57,6 +56,11 @@ namespace NugetAuditor.VSIX
             solution = null;
 
             return hierarchy;
+        }
+
+        internal static string GetPackageReferenceFilePath(Project project)
+        {
+            return Path.Combine(Path.GetDirectoryName(project.FullName), "packages.config");
         }
 
         internal static IVsTextLines GetDocumentTextLines(string path)
@@ -122,10 +126,12 @@ namespace NugetAuditor.VSIX
 
         internal static bool IsProjectSupported(Project project)
         {
+            // IVsPackageInstallerServices.IsPackageInstalled throws InvalidOperationException if project does not support NuGet packages.
+            // TODO: Find a better way to detect support for NuGet packages.
+
             try
             {
                 ServiceLocator.GetInstance<IVsPackageInstallerServices>().IsPackageInstalled(project, "__dummy__");
-
                 return true;
             }
             catch (InvalidOperationException)
@@ -136,7 +142,7 @@ namespace NugetAuditor.VSIX
 
         internal static bool IsProjectUnloaded(this Project project)
         {
-            return UnloadedProjectTypeGuid.Equals(project.Kind, StringComparison.OrdinalIgnoreCase);
+            return project.Kind.Equals(EnvDTE.Constants.vsProjectKindUnmodeled, StringComparison.OrdinalIgnoreCase);
         }
 
         internal static IEnumerable<Project> GetAllSupportedProjects(Solution solution)

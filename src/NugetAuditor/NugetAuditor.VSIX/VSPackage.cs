@@ -58,7 +58,7 @@ namespace NugetAuditor.VSIX
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(GuidList.guidAuditPkgString)]
-    [ProvideAutoLoad(Microsoft.VisualStudio.Shell.Interop.UIContextGuids.SolutionExists)]
+    [ProvideAutoLoad(UIContextGuids.SolutionExists)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class VSPackage : Package, IDisposable
@@ -250,6 +250,7 @@ namespace NugetAuditor.VSIX
 
                 _vsMonitorSelection = null;
                 _uiCtx = null;
+                _instance = null;
             }
             finally
             {

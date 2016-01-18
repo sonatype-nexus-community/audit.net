@@ -6,11 +6,11 @@
     <Description>This package detects and audits installed nuget packages.</Description>
     <MoreInfo>http://ossindex.net/</MoreInfo>
     <License>License.txt</License>
+    <Icon>OSSAuditPackage.ico</Icon>
+    <PreviewImage>Resources\OSSAuditPackage.ico</PreviewImage>
   </Metadata>
   <Installation InstalledByMsi="true">
-    <InstallationTarget Version="[14.0,15.0)" Id="Microsoft.VisualStudio.Community" />
-    <InstallationTarget Version="[14.0,15.0)" Id="Microsoft.VisualStudio.Pro" />
-    <InstallationTarget Version="[14.0,15.0)" Id="Microsoft.VisualStudio.Enterprise" />
+    <InstallationTarget Version="[11.0,)" Id="Microsoft.VisualStudio.Pro" />
   </Installation>
   <Dependencies>
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />

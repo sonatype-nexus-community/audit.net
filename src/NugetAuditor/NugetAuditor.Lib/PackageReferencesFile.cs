@@ -93,32 +93,6 @@ namespace NugetAuditor.Lib
             }
         }
 
-        public void ToggleIgnorePackageReference(PackageReference packageReference)
-        {
-            foreach (var node in GetElements())
-            {
-                var package = new PackageId(
-                    node.GetAttributeValue("id", string.Empty),
-                    node.GetAttributeValue("version", string.Empty)
-                    );
-                
-                if (package.Equals(packageReference))
-                {
-                    if (packageReference.Ignore == false)
-                    {
-                        node.AddBeforeSelf(new XComment("@OSS Index Ignore"), new XText(Environment.NewLine));
-                        packageReference.Ignore = true;
-                    }
-                    else
-                    {
-                        node.PreviousNode.Remove();
-                        packageReference.Ignore = false;
-                    }
-                    node.Document.Save(this.Path);
-                }
-            }
-        }
-
         public IEnumerable<PackageReference> GetPackageReferences()
         {
             return GetElements().Select(x =>

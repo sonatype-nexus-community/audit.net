@@ -40,6 +40,6 @@ namespace NugetAuditor.Lib
             var attribute = element.Attribute(name);
 
             return (attribute == null) ? defaultValue : attribute.Value;
-        }      
+        }   
     }
 }

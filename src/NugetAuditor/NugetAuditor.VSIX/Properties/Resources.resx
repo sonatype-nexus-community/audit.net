@@ -138,6 +138,9 @@
   <data name="NoVulnarebilitiesFound" xml:space="preserve">
     <value>No vulnerabilities found.</value>
   </data>
+  <data name="SkippingIgnoredPackage" xml:space="preserve">
+    <value>Skipping ignored package '{0}'.</value>
+  </data>
   <data name="VulnerabilitiesFound" xml:space="preserve">
     <value>Vulnerabilities found in {0} package(s). See Error List for details.</value>
   </data>
