@@ -81,6 +81,7 @@
     <Compile Include="OSSIndex\ApiResponses.cs" />
     <Compile Include="OSSIndex\IApiClient.cs" />
     <Compile Include="OSSIndex\ApiClient.cs" />
+    <Compile Include="OSSIndex\Project.cs" />
     <Compile Include="PackageId.cs" />
     <Compile Include="PackageReference.cs" />
     <Compile Include="PackageReferencesFile.cs" />

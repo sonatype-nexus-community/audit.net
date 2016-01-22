@@ -23,19 +23,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace NugetAuditor.Lib.OSSIndex
 {
-    internal interface IApiClient
+    /*
+    [
+      {
+        "id": 8396559329,
+        "uri": "https://github.com/jquery/jquery",
+        "name": "JQuery",
+        "description": "jQuery is a cross-platform JavaScript library designed to simplify the client-side scripting of HTML.",
+        "hasVulnerability": true,
+        "vulnerabilities": "http://localhost:8080/v1.1/project/8396559329/vulnerabilities"
+      }
+    ]
+    */
+    public class Project
     {
-        IList<SCM> GetSCMs(IEnumerable<long> scmIds);
-        IList<SCM> GetSCM(long id);
-        IList<Project> GetProjects(IEnumerable<long> projectIds);
-        IList<Project> GetProject(long id);
-        IList<Vulnerability> GetVulnerabilities(long id);
-        IList<Artifact> SearchArtifacts(IEnumerable<ArtifactSearch> searches);
-        IList<Artifact> SearchArtifact(ArtifactSearch search);
-        IList<Artifact> SearchArtifact(string pm, string name, string version);
+        public long Id { get; set; }
+        public string Uri { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public bool HasVulnerability { get; set; }
+        public string Vulnerabilities { get; set; }
     }
 }

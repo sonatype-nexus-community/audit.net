@@ -43,7 +43,7 @@ namespace NugetAuditor.Lib.OSSIndex
         { }
 
         public ApiClient(HttpRequestCachePolicy cachePolicy)
-            : base("https://ossindex.net/v1.0", cachePolicy)
+            : base("https://ossindex.net/v1.1", cachePolicy)
         { }
 
         private void BeforeSerialization(IRestResponse response)
@@ -158,11 +158,60 @@ namespace NugetAuditor.Lib.OSSIndex
             return response.Data;
         }
 
+        public IList<Project> GetProjects(IEnumerable<long> projectIds)
+        {
+            var projects = new List<Project>(projectIds.Count());
+
+            while (projectIds.Any())
+            {
+                var request = new RestRequest(Method.GET);
+
+                request.Resource = "project/{id}";
+                request.RequestFormat = DataFormat.Json;
+                request.OnBeforeDeserialization = BeforeSerialization;
+
+                request.AddParameter("id", string.Join(",", projectIds.Take(this._pageSize)), ParameterType.UrlSegment);
+
+                var response = Execute<ProjectResponse>(request);
+
+                if (response.ResponseStatus == ResponseStatus.Error)
+                {
+                    throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+                }
+
+                projects.AddRange(response.Data);
+
+                projectIds = projectIds.Skip(this._pageSize);
+            }
+
+            return projects;
+        }
+
+        public IList<Project> GetProject(long projectId)
+        {
+            var request = new RestRequest(Method.GET);
+
+            request.Resource = "project/{id}";
+            request.RequestFormat = DataFormat.Json;
+            request.OnBeforeDeserialization = BeforeSerialization;
+
+            request.AddParameter("id", projectId.ToString(), ParameterType.UrlSegment);
+
+            var response = Execute<ProjectResponse>(request);
+
+            if (response.ResponseStatus == ResponseStatus.Error)
+            {
+                throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+            }
+
+            return response.Data;
+        }
+
         public IList<Vulnerability> GetVulnerabilities(long scmId)
         {
             var request = new RestRequest(Method.GET);
 
-            request.Resource = "scm/{id}/vulnerabilities";
+            request.Resource = "project/{id}/vulnerabilities";
             request.AddParameter("id", scmId, ParameterType.UrlSegment);
 
             var response = Execute<VulnerabilityResponse>(request);
