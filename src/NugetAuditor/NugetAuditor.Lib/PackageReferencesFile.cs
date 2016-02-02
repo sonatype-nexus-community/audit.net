@@ -35,14 +35,6 @@ namespace NugetAuditor.Lib
     {
         public string Path { get; private set; }
 
-        public bool Exists
-        {
-            get
-            {
-                return System.IO.File.Exists(this.Path);
-            }
-        }
-
         public PackageReferencesFile(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -55,6 +47,11 @@ namespace NugetAuditor.Lib
 
         private IEnumerable<XElement> GetElements()
         {
+            if (!System.IO.File.Exists(this.Path))
+            {
+                return Enumerable.Empty<XElement>();
+            }
+
             var loadOptions = LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo;
 
             return XDocument.Load(this.Path, loadOptions).Root.Elements("package");

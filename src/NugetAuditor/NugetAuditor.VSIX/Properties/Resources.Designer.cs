@@ -79,6 +79,15 @@ namespace NugetAuditor.VSIX.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Auditing {0} referenced packages. .
+        /// </summary>
+        internal static string AuditingPackages {
+            get {
+                return ResourceManager.GetString("AuditingPackages", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Auditing {0} packages in project &apos;{1}&apos;..
         /// </summary>
         internal static string AuditingPackagesInProject {

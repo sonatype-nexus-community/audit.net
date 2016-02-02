@@ -34,8 +34,6 @@ namespace NugetAuditor.Lib.OSSIndex
     [Serializable]
     public class ApiClientException : Exception
     {
-        const string apiErrorMessage = "Unexpected server response! (Code: {0}, Error: {1})";
-
         public ApiClientException(string message)
             : base(message)
         {
@@ -47,5 +45,21 @@ namespace NugetAuditor.Lib.OSSIndex
         {
 
         }       
+    }
+
+    [Serializable]
+    public class ApiClientTransportException : Exception
+    {
+        public ApiClientTransportException(string message)
+            : base(message)
+        {
+
+        }
+
+        public ApiClientTransportException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+
+        }
     }
 }

@@ -123,6 +123,9 @@
   <data name="AuditingPackageError" xml:space="preserve">
     <value>An error occurred while trying to audit package(s): {0}</value>
   </data>
+  <data name="AuditingPackages" xml:space="preserve">
+    <value>Auditing {0} referenced packages. </value>
+  </data>
   <data name="AuditingPackagesInProject" xml:space="preserve">
     <value>Auditing {0} packages in project '{1}'.</value>
   </data>

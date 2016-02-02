@@ -45,7 +45,7 @@ namespace NugetAuditor.VSIX
 {
     internal static class VsUtility
     {
-        internal static IVsHierarchy GetProjectHierarchy(Project project)
+        internal static IVsHierarchy GetHierarchy(this Project project)
         {
             IVsHierarchy hierarchy = null;
 
@@ -58,7 +58,7 @@ namespace NugetAuditor.VSIX
             return hierarchy;
         }
 
-        internal static string GetPackageReferenceFilePath(Project project)
+        internal static string GetPackageReferenceFilePath(this Project project)
         {
             return Path.Combine(Path.GetDirectoryName(project.FullName), "packages.config");
         }
@@ -126,9 +126,11 @@ namespace NugetAuditor.VSIX
 
         internal static bool IsProjectSupported(Project project)
         {
+            // Check if packages.config exists
+            return File.Exists(project.GetPackageReferenceFilePath());
+
             // IVsPackageInstallerServices.IsPackageInstalled throws InvalidOperationException if project does not support NuGet packages.
             // TODO: Find a better way to detect support for NuGet packages.
-
             try
             {
                 ServiceLocator.GetInstance<IVsPackageInstallerServices>().IsPackageInstalled(project, "__dummy__");
@@ -145,7 +147,7 @@ namespace NugetAuditor.VSIX
             return project.Kind.Equals(EnvDTE.Constants.vsProjectKindUnmodeled, StringComparison.OrdinalIgnoreCase);
         }
 
-        internal static IEnumerable<Project> GetAllSupportedProjects(Solution solution)
+        internal static IEnumerable<Project> GetSupportedProjects(this Solution solution)
         {
             if (solution == null || !solution.IsOpen)
             {
@@ -163,36 +165,43 @@ namespace NugetAuditor.VSIX
             {
                 Project project = source.Pop();
 
-                if (IsProjectSupported(project))
-                {
-                    yield return project;
-                }
-
-                ProjectItems projectItems = null;
-
-                try
-                {
-                    projectItems = project.ProjectItems;
-                }
-                catch (NotImplementedException)
+                if (VsUtility.IsProjectUnloaded(project))
                 {
                     continue;
                 }
 
-                foreach (ProjectItem projectItem in projectItems)
+                if (VsUtility.IsProjectSupported(project))
                 {
-                    try
+                    yield return project;
+                }
+
+                try
+                {
+                    var projectItems = project.ProjectItems;
+
+                    if (projectItems == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (ProjectItem projectItem in projectItems)
                     {
                         if (projectItem.SubProject != null)
                         {
                             source.Push(projectItem.SubProject);
                         }
                     }
-                    catch (NotImplementedException)
-                    {
-                    }
+                }
+                catch (NotImplementedException)
+                {
+                    continue;
                 }
             }
+        }
+
+        internal static string GetName(this Solution solution)
+        {
+            return (string)solution.Properties.Item("Name").Value;
         }
 
         internal static string GetSolutionName(Solution solution)
