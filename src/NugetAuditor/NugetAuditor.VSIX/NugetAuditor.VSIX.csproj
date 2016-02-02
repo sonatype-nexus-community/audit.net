@@ -59,6 +59,7 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="BackgroundQueue.cs" />
     <Compile Include="VsUtility.cs" />
     <Compile Include="AuditCompletedEventArgs.cs" />
     <Compile Include="EventSinks\SelectionEvents.cs" />
