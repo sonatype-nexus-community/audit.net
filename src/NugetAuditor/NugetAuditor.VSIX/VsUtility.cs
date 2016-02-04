@@ -40,6 +40,7 @@ using Microsoft.VisualStudio.Shell;
 using System.Threading;
 using System.Windows.Forms;
 using System.IO;
+using Microsoft.VisualStudio;
 
 namespace NugetAuditor.VSIX
 {
@@ -83,51 +84,59 @@ namespace NugetAuditor.VSIX
 
             return null;
         }
-           
-        internal static Project GetActiveProject(IVsMonitorSelection vsMonitorSelection)
+
+        public static Project GetActiveProject(IVsMonitorSelection vsMonitorSelection)
         {
-            Project project;
-            IntPtr zero = IntPtr.Zero;
+            IntPtr ppHier = IntPtr.Zero;
+            uint pitemid;
+            IVsMultiItemSelect ppMIS;
             IntPtr ppSC = IntPtr.Zero;
+
             try
             {
-                uint num;
-                IVsMultiItemSelect select;
-                object obj2;
-                vsMonitorSelection.GetCurrentSelection(out zero, out num, out select, out ppSC);
-                if (zero == IntPtr.Zero)
+                vsMonitorSelection.GetCurrentSelection(out ppHier, out pitemid, out ppMIS, out ppSC);
+
+                if (ppHier == IntPtr.Zero)
                 {
                     return null;
                 }
-                if (num == 0xfffffffd)
+
+                // multiple items are selected.
+                if (pitemid == (uint)VSConstants.VSITEMID.Selection)
                 {
                     return null;
                 }
-                IVsHierarchy typedObjectForIUnknown = Marshal.GetTypedObjectForIUnknown(zero, typeof(IVsHierarchy)) as IVsHierarchy;
-                if ((typedObjectForIUnknown != null) && (typedObjectForIUnknown.GetProperty(0xfffffffe, -2027, out obj2) >= 0))
+
+                IVsHierarchy hierarchy = Marshal.GetTypedObjectForIUnknown(ppHier, typeof(IVsHierarchy)) as IVsHierarchy;
+                if (hierarchy != null)
                 {
-                    return (Project)obj2;
+                    object project;
+                    if (hierarchy.GetProperty(VSConstants.VSITEMID_ROOT, (int)__VSHPROPID.VSHPROPID_ExtObject, out project) >= 0)
+                    {
+                        return project as Project;
+                    }
                 }
-                project = null;
+
+                return null;
             }
             finally
             {
-                if (zero != IntPtr.Zero)
+                if (ppHier != IntPtr.Zero)
                 {
-                    Marshal.Release(zero);
+                    Marshal.Release(ppHier);
                 }
                 if (ppSC != IntPtr.Zero)
                 {
                     Marshal.Release(ppSC);
                 }
             }
-            return project;
         }
 
         internal static bool IsProjectSupported(Project project)
         {
+            VSPackage.AssertOnMainThread();
             // Check if packages.config exists
-            return File.Exists(project.GetPackageReferenceFilePath());
+            //return File.Exists(project.GetPackageReferenceFilePath());
 
             // IVsPackageInstallerServices.IsPackageInstalled throws InvalidOperationException if project does not support NuGet packages.
             // TODO: Find a better way to detect support for NuGet packages.
