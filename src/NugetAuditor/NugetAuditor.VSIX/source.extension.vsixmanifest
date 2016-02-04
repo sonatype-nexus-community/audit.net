@@ -9,7 +9,7 @@
     <Icon>Resources\logo-32x32.png</Icon>
     <PreviewImage>Resources\logo-200x200.png</PreviewImage>
   </Metadata>
-  <Installation>
+  <Installation InstalledByMsi="true">
     <InstallationTarget Version="[11.0,)" Id="Microsoft.VisualStudio.Pro" />
   </Installation>
   <Dependencies>
