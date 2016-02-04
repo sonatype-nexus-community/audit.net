@@ -127,7 +127,14 @@ namespace NugetAuditor.VSIX
         internal static bool IsProjectSupported(Project project)
         {
             // Check if packages.config exists
-            return File.Exists(project.GetPackageReferenceFilePath());
+            try
+            {
+                return File.Exists(project.GetPackageReferenceFilePath());
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
 
             // IVsPackageInstallerServices.IsPackageInstalled throws InvalidOperationException if project does not support NuGet packages.
             // TODO: Find a better way to detect support for NuGet packages.
