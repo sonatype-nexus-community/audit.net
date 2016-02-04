@@ -134,17 +134,20 @@ namespace NugetAuditor.VSIX
                 {
                     TTasks.Task.Delay(TimeSpan.FromSeconds(5)).Wait();
                 }
-
             });
         }
 
         private void InstallerEvents_PackageReferenceRemoved(IVsPackageMetadata metadata)
         {
-            RefreshTasks();
+            _backgroundQueue.QueueTask(() => {
+                RefreshTasks();
+            }, _uiTaskScheduler);
         }
 
         private void RefreshTasks()
         {
+            VSPackage.AssertOnMainThread();
+
             var supportedProjects = _dte.Solution.GetSupportedProjects();
 
             _taskProvider.SuspendRefresh();
