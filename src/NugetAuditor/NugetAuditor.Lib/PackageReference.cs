@@ -29,14 +29,12 @@ using System.Xml.Linq;
 
 namespace NugetAuditor.Lib
 {
-    public class PackageReference : PackageId
+    public class PackageReference
     {
         public PackageId PackageId
         {
-            get
-            {
-                return this as PackageId;
-            }
+            get;
+            private set;
         }
 
         public string File
@@ -74,17 +72,22 @@ namespace NugetAuditor.Lib
             get;
             set;
         }
-               
-        public PackageReference(string file, string id, string version) 
-            : base(id, version)
+
+        public PackageReference(string file, string id, string version)
+            :this(file, new PackageId(id, version))
+        {
+        }
+
+        public PackageReference(string file, PackageId packageId) 
         {
             this.File = file;
+            this.PackageId = packageId;
         }
 
         public override int GetHashCode()
         {
             int h1 = this.File.GetHashCode();
-            int h2 = base.GetHashCode();
+            int h2 = this.PackageId.GetHashCode();
 
             return (((h1 << 5) + h1) ^ h2);
         }
@@ -98,7 +101,12 @@ namespace NugetAuditor.Lib
                 return false;
             }
 
-            return (this.File.Equals(other.File, StringComparison.OrdinalIgnoreCase) && base.Equals(obj));
+            return Equals(other);// (this.File.Equals(other.File, StringComparison.OrdinalIgnoreCase) && this.PackageId.Equals(other.PackageId));
+        }
+
+        public bool Equals(PackageReference other)
+        {
+            return (this.File.Equals(other.File, StringComparison.OrdinalIgnoreCase) && this.PackageId.Equals(other.PackageId));
         }
     }
 }

@@ -77,7 +77,12 @@ namespace NugetAuditor.Lib
                 return false;
             }
 
-            return (this.Id.Equals(other.Id, StringComparison.OrdinalIgnoreCase) && this.VersionString.Equals(other.VersionString, StringComparison.OrdinalIgnoreCase));
+            return Equals(other);// (this.Id.Equals(other.Id, StringComparison.OrdinalIgnoreCase) && this.VersionString.Equals(other.VersionString, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public bool Equals(PackageId obj)
+        {
+            return (this.Id.Equals(obj.Id, StringComparison.OrdinalIgnoreCase) && this.VersionString.Equals(obj.VersionString, StringComparison.OrdinalIgnoreCase));
         }
 
         public override int GetHashCode()
@@ -90,7 +95,7 @@ namespace NugetAuditor.Lib
 
         public override string ToString()
         {
-            return (this.Id + " " + this.Version);
+            return string.Format("{0} {1}", this.Id, this.Version);
         }
     }
 }

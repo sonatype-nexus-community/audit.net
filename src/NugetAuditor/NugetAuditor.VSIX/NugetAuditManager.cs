@@ -37,6 +37,7 @@ using System.Threading;
 using NuGet.VisualStudio;
 using Microsoft.VisualStudio;
 using NugetAuditor.VSIX.Properties;
+using TTasks = System.Threading.Tasks;
 
 namespace NugetAuditor.VSIX
 {
@@ -53,6 +54,11 @@ namespace NugetAuditor.VSIX
         private IVsPackageInstallerEvents _packageInstallerEvents;
         private VsSelectionEvents _selectionEvents;
 
+        private BackgroundQueue _backgroundQueue = new BackgroundQueue();
+        private TTasks.TaskScheduler _uiTaskScheduler;
+
+        private Dictionary<PackageId, AuditResult> _auditResults = new Dictionary<PackageId, AuditResult>(EqualityComparer<PackageId>.Default);
+
         private bool _auditRunning = false;
 
         public bool IsAuditRunning
@@ -67,6 +73,7 @@ namespace NugetAuditor.VSIX
 
         public void Initialize()
         {
+            _uiTaskScheduler = TTasks.TaskScheduler.FromCurrentSynchronizationContext();
             _taskProvider = new VulnerabilityTaskProvider(this._serviceProvider);
             _markerProvider = new PackageReferenceMarkerProvider(_taskProvider);
 
@@ -79,7 +86,7 @@ namespace NugetAuditor.VSIX
             {
                 throw new InvalidOperationException(string.Format(Resources.Culture, Resources.General_MissingService, typeof(IVsPackageInstallerEvents).FullName));
             }
-
+            
             _packageInstallerEvents.PackageReferenceAdded += InstallerEvents_PackageReferenceAdded;
             _packageInstallerEvents.PackageReferenceRemoved += InstallerEvents_PackageReferenceRemoved;
 
@@ -98,21 +105,64 @@ namespace NugetAuditor.VSIX
 
         private void SelectionEvents_SolutionOpened(object sender, EventArgs e)
         {
-            AuditSolutionPackages();
+            _backgroundQueue.QueueTask(async () => 
+            {
+                //start the task on UI thread.
+                var asyncTask = TTasks.Task.Factory.StartNew(() =>
+                {
+                   return AuditSolutionPackagesInternal();
+                }, CancellationToken.None, TTasks.TaskCreationOptions.None, _uiTaskScheduler);
+
+                while (!await asyncTask)
+                {
+                    //wait on background thread.
+                    TTasks.Task.Delay(TimeSpan.FromSeconds(5)).Wait();
+                }
+            });
         }
 
         private void InstallerEvents_PackageReferenceAdded(IVsPackageMetadata metadata)
         {
-            AuditPackage(metadata);
+            _backgroundQueue.QueueTask(async () =>
+            {
+                var asyncTask = TTasks.Task.Factory.StartNew(() =>
+                {
+                    return AuditPackageInternal(metadata);
+                }, CancellationToken.None, TTasks.TaskCreationOptions.None, _uiTaskScheduler);
+
+                while (!await asyncTask)
+                {
+                    TTasks.Task.Delay(TimeSpan.FromSeconds(5)).Wait();
+                }
+
+            });
         }
 
         private void InstallerEvents_PackageReferenceRemoved(IVsPackageMetadata metadata)
         {
-            var packageId = new Lib.PackageId(metadata.Id, metadata.VersionString);
+            RefreshTasks();
+        }
 
-            var tasks = _taskProvider.Tasks.OfType<VulnerabilityTask>().Where(x => packageId.Equals(x.PackageId));
+        private void RefreshTasks()
+        {
+            var supportedProjects = _dte.Solution.GetSupportedProjects();
 
-            RemoveTasks(tasks);
+            _taskProvider.SuspendRefresh();
+
+            _taskProvider.Tasks.Clear();
+
+            foreach (var task in GetVulnerabilityTasks(supportedProjects))
+            {
+                _taskProvider.Tasks.Add(task);
+            }
+
+            _taskProvider.Refresh();
+            _taskProvider.ResumeRefresh();
+
+            foreach (var project in supportedProjects)
+            {
+                CreateMarkers(project.GetPackageReferenceFilePath());
+            }
         }
 
         private void OnDocumentClosing(Document document)
@@ -155,72 +205,62 @@ namespace NugetAuditor.VSIX
             _taskProvider.ResumeRefresh();
         }
 
-        private int EnsurePackageSubcategory(PackageId package)
+        private IEnumerable<VulnerabilityTask> GetVulnerabilityTasks(IEnumerable<Project> supportedProjects)
         {
-            var category = package.ToString();
-
-            var index = _taskProvider.Subcategories.IndexOf(category);
-
-            if (index < 0)
+            foreach (var project in supportedProjects)
             {
-                index = _taskProvider.Subcategories.Add(category);
-            }
+                var projectHierarchy = project.GetHierarchy();
 
-            return index;                             
-        }
+                var packageReferencesFile = new PackageReferencesFile(project.GetPackageReferenceFilePath());
 
-        private void ProcessAuditResults(Project project, IEnumerable<Lib.AuditResult> auditResults)
-        {
-            var projectHierarchy = VsUtility.GetProjectHierarchy(project);
-            var packageReferenceFilePath = VsUtility.GetPackageReferenceFilePath(project);
-
-            var packageReferenceFile = new PackageReferencesFile(packageReferenceFilePath);
-
-            foreach (var packageReference in packageReferenceFile.GetPackageReferences())
-            {
-                if (packageReference.Ignore)
+                foreach (var packageReference in packageReferencesFile.GetPackageReferences())
                 {
-                    WriteLine(Resources.SkippingIgnoredPackage, packageReference.PackageId);
-                    continue;
-                }
-
-                var auditResult = auditResults.Where(x => x.PackageId.Equals(packageReference)).FirstOrDefault();
-
-                if (auditResult == null
-                    || auditResult.Status == AuditStatus.NoKnownVulnerabilities
-                    || auditResult.Status == AuditStatus.UnknownPackage
-                    || auditResult.Status == AuditStatus.UnknownSource)
-                {
-                    continue;
-                }
-
-                foreach (var vulnerability in auditResult.Vulnerabilities)
-                {
-                    var affecting = vulnerability.AffectsVersion(packageReference.VersionString);
-
-                    var task = new VulnerabilityTask(packageReference)
+                    if (packageReference.Ignore)
                     {
-                        Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
-                        ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
-                        Text = string.Format("{0}: {1}\n{2}", packageReference.PackageId, vulnerability.Title, vulnerability.Summary),
-                        HierarchyItem = projectHierarchy,
-                        Category = TaskCategory.Misc,
-                        Document = packageReferenceFilePath,
-                        Line = packageReference.StartLine,
-                        Column = packageReference.StartPos,
-                        SubcategoryIndex = EnsurePackageSubcategory(packageReference),
-                        HelpKeyword = vulnerability.CveId,
-                    };
+                        continue;
+                    }
 
-                    task.Navigate += Task_Navigate;
-                    task.Removed += Task_Removed;
-                    task.Help += Task_Help;
+                    AuditResult auditResult;
 
-                    _taskProvider.Tasks.Add(task);
+                    if (!_auditResults.TryGetValue(packageReference.PackageId, out auditResult))
+                    {
+                        continue;
+                    }
+
+                    if (auditResult == null
+                        || auditResult.Status == AuditStatus.NoKnownVulnerabilities
+                        || auditResult.Status == AuditStatus.UnknownPackage
+                        || auditResult.Status == AuditStatus.UnknownSource)
+                    {
+                        continue;
+                    }
+
+                    foreach (var vulnerability in auditResult.Vulnerabilities)
+                    {
+                        var affecting = vulnerability.AffectsVersion(packageReference.PackageId.VersionString);
+
+                        var task = new VulnerabilityTask(packageReference)
+                        {
+                            Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
+                            ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
+                            Text = string.Format("{0}: {1}\n{2}", packageReference.PackageId, vulnerability.Title, vulnerability.Summary),
+                            HierarchyItem = projectHierarchy,
+                            Category = TaskCategory.Misc,
+                            Document = packageReference.File,
+                            Line = packageReference.StartLine,
+                            Column = packageReference.StartPos,
+                            HelpKeyword = vulnerability.CveId,
+                        };
+                        
+
+                        task.Navigate += Task_Navigate;
+                        task.Removed += Task_Removed;
+                        task.Help += Task_Help;
+
+                        yield return task;
+                    }
                 }
             }
-
-            CreateMarkers(packageReferenceFilePath);
         }
 
         private void Task_Help(object sender, EventArgs e)
@@ -266,6 +306,10 @@ namespace NugetAuditor.VSIX
                 WriteLine(Resources.AuditingPackageError, e.Exception.Message);
                 ExceptionHelper.WriteToActivityLog(e.Exception);
             }
+            else if (e.Results.Count() == 0)
+            {
+                WriteLine("No packages found to audit.");
+            }
             else
             {
                 var vulnerableCount = e.Results.Count(x => x.Status == AuditStatus.HasVulnerabilities);
@@ -279,14 +323,14 @@ namespace NugetAuditor.VSIX
                     WriteLine(Resources.NoVulnarebilitiesFound);
                 }
 
-                _taskProvider.SuspendRefresh();
-
-                foreach (Project project in VsUtility.GetAllSupportedProjects(_dte.Solution))
+                //update audit results dictionary
+                foreach (var auditResult in e.Results)
                 {
-                    ProcessAuditResults(project, e.Results);
+                    _auditResults[auditResult.PackageId] = auditResult;
                 }
 
-                _taskProvider.ResumeRefresh();
+                //refresh tasks
+                RefreshTasks();
 
                 if (vulnerableCount > 0)
                 {
@@ -294,71 +338,92 @@ namespace NugetAuditor.VSIX
                 }
             }
         }
-
-        public void AuditPackage(IVsPackageMetadata package)
-        {
-            ClearOutput(true);
-
-            WriteLine(Resources.AuditingPackage, package);
-
-            bool started = RunAudit(new[] { package }, OnAuditCompleted);
-
-            if (started)
-            {
-                //remove tasks related to this package
-                var tasks = _taskProvider.Tasks.OfType<VulnerabilityTask>().Where(x => package.Equals(x.PackageId));
-
-                RemoveTasks(tasks);
-            }
-        }
-
+        
         public void AuditProjectPackages(Project project)
         {
-            if (project == null)
-            {
-                throw new ArgumentNullException("project");
-            }
-
             ClearOutput(true);
 
-            var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages(project).ToList();
-
-            WriteLine(Resources.AuditingPackagesInProject, packages.Count, project.Name);
-
-            bool started = RunAudit(packages, OnAuditCompleted);
-
-            if (started)
-            {
-                //remove tasks related to this project 
-                var path = VsUtility.GetPackageReferenceFilePath(project);
-                var tasks = _taskProvider.Tasks.OfType<VulnerabilityTask>()
-                                .Where(x => x.Document.Equals(path, StringComparison.OrdinalIgnoreCase));
-
-                RemoveTasks(tasks);
-            }
+            AuditProjectPackagesInternal(project);
         }
 
         public void AuditSolutionPackages()
         {
             ClearOutput(true);
 
-            var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages().ToList();
+            AuditSolutionPackagesInternal();
+        }
 
-            var solutionName = VsUtility.GetSolutionName(_dte.Solution);
+        private bool AuditSolutionPackagesInternal()
+        {
+            VSPackage.AssertOnMainThread();
 
-            WriteLine(Resources.AuditingPackagesInSolution, packages.Count, solutionName);
+            var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages();
 
-            bool started = RunAudit(packages, OnAuditCompleted);
+            WriteLine(Resources.AuditingPackagesInSolution, packages.Count(), _dte.Solution.GetName());
+
+            return AuditPackagesInternal(packages);
+        }
+
+        private bool AuditProjectPackagesInternal(Project project)
+        {
+            VSPackage.AssertOnMainThread();
+
+            if (project == null)
+            {
+                throw new ArgumentNullException("project");
+            }
+
+            var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages(project);
+
+            WriteLine(Resources.AuditingPackagesInProject, packages.Count(), project.Name);
+
+            return AuditPackagesInternal(packages);
+        }
+
+        private bool AuditPackageInternal(IVsPackageMetadata package)
+        {
+            var packageId = new PackageId(package.Id, package.VersionString);
+
+            WriteLine(Resources.AuditingPackage, packageId);
+
+            return AuditPackagesInternal(new[] { packageId });
+        }
+
+        private bool AuditPackagesInternal(IEnumerable<IVsPackageMetadata> packages)
+        {
+            var packageIds = packages.Select(x => new PackageId(x.Id, x.VersionString));
+
+            return AuditPackagesInternal(packageIds);
+        }
+
+        private bool AuditPackagesInternal(IEnumerable<PackageId> packageIds)
+        {
+            bool started = RunAudit(packageIds, OnAuditCompleted);
 
             if (started)
             {
-                //remove all tasks
-                RemoveTasks(_taskProvider.Tasks.OfType<VulnerabilityTask>());
+                //remove tasks related to this packages
+                var tasks = _taskProvider.Tasks.OfType<VulnerabilityTask>().Where(x => packageIds.Contains(x.PackageId));
+
+                RemoveTasks(tasks);
             }
+
+            return started;
         }
 
-        private bool RunAudit(IEnumerable<IVsPackageMetadata> packages, EventHandler<AuditCompletedEventArgs> completedHandler)
+        private bool RunAudit(IEnumerable<PackageId> packageIds, EventHandler<AuditCompletedEventArgs> completedHandler)
         {
+            if (!packageIds.Any())
+            {
+                if (completedHandler != null)
+                {
+                    var eventArgs = new AuditCompletedEventArgs(Enumerable.Empty<AuditResult>(), null);
+
+                    completedHandler(null, eventArgs);
+                }
+                return true;
+            }
+
             if (IsAuditRunning)
             {
                 return false;
@@ -372,12 +437,10 @@ namespace NugetAuditor.VSIX
                 {
                     // !! WORKER THREAD CONTEXT !!
                     Exception exception = null;
-                    object results = null;
+                    IEnumerable<AuditResult> results = null;
 
                     try
                     {
-                        var packageIds = packages.Select(x => new PackageId(x.Id, x.VersionString));
-
                         results = Lib.NugetAuditor.AuditPackages(packageIds);
                     }
                     catch (Exception ex)
@@ -401,10 +464,10 @@ namespace NugetAuditor.VSIX
                         // notify event subscribers (if any).
                         if (completedHandler != null)
                         {
-                            var eventArgs = new AuditCompletedEventArgs(x as IEnumerable<Lib.AuditResult>, exception);
+                            var eventArgs = new AuditCompletedEventArgs(results, exception);
                             completedHandler(null, eventArgs);
                         }
-                    }, results);
+                    }, null);
                 });
 
             return true;
@@ -414,6 +477,8 @@ namespace NugetAuditor.VSIX
 
         private IVsOutputWindowPane GetOutputPane()
         {
+            VSPackage.AssertOnMainThread();
+
             return VSPackage.Instance.GetOutputPane(VSConstants.SID_SVsGeneralOutputWindowPane, "Audit.Net");
         }
 
@@ -482,6 +547,13 @@ namespace NugetAuditor.VSIX
                     {
                         _taskProvider.Dispose();
                     }
+
+                    if (_backgroundQueue != null)
+                    {
+                        _backgroundQueue.Dispose();
+                    }
+
+                    _auditResults.Clear();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
@@ -493,6 +565,8 @@ namespace NugetAuditor.VSIX
                 _selectionEvents = null;
                 _dte = null;
                 _taskProvider = null;
+                _backgroundQueue = null;
+                _auditResults = null;
 
                 disposedValue = true;
             }

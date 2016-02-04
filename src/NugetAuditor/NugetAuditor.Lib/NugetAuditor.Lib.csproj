@@ -52,8 +52,8 @@
       <HintPath>..\packages\RestSharpSigned.105.2.3\lib\net45\RestSharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="SemVer, Version=0.6.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SemanticVersioning.0.6.2.0\lib\portable-net40+sl50+MonoAndroid10+xamarinios10+MonoTouch10\SemVer.dll</HintPath>
+    <Reference Include="SemVer, Version=0.6.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SemanticVersioning.0.6.9.0\lib\portable-net40+sl50+MonoAndroid10+xamarinios10+MonoTouch10\SemVer.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -109,7 +109,7 @@
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)packages\Brutal.Dev.StrongNameSigner.1.5.1\tools\StrongNameSigner.Console.exe" -in "$(SolutionDir)packages\SemanticVersioning.0.6.2.0"</PreBuildEvent>
+    <PreBuildEvent>"$(SolutionDir)packages\Brutal.Dev.StrongNameSigner.1.5.1\tools\StrongNameSigner.Console.exe" -in "$(SolutionDir)packages\SemanticVersioning.0.6.9.0"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

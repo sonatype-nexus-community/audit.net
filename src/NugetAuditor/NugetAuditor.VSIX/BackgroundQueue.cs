@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2015-2016, Vör Security Ltd.
+﻿#region License
+// Copyright (c) 2015-2016, Vör Security Ltd.
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -22,58 +23,67 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#endregion
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace NugetAuditor.Lib.OSSIndex
+namespace NugetAuditor.VSIX
 {
-    /*
-    [
-      {
-        "uri": "cve:/CVE-2011-4969",
-        "id": "348528",
-        "cve-id": "CVE-2011-4969",
-        "summary": "Cross-site scripting (XSS) vulnerability in jQuery before 1.6.3, when using location.hash to select elements, allows remote attackers to inject arbitrary web script or HTML via a crafted tag.",
-        "details": "https://ossindex.net/v1.0/cve/348528",
-        "versions": [
-          "1.6",
-          "1.6.1",
-          "1.6.2"
-        ]
-      }
-    ]
-    */
-    public class Vulnerability
+    internal class BackgroundQueue   : IDisposable
     {
-        private SemVer.Range _range;
+       
+        private Task _previousTask = Task.FromResult(true);
 
-        public string CveId { get; set; }
-        public string Details { get; set; }
-        public string Id { get; set; }
-        public string Summary { get; set; }
-        public string Title { get; set; }
-        public string Uri { get; set; }
-        public List<string> Versions { get; set; }
+        private object _lock = new object();
 
-        private SemVer.Range Range
+        public Task QueueTask(Action action)
         {
-            get
+            return QueueTask(action, TaskScheduler.Default);
+        }
+
+        public Task QueueTask(Action action, TaskScheduler taskScheduler)
+        {
+            lock (_lock)
             {
-                if (_range == null)
-                {
-                    _range = new SemVer.Range(string.Join("||", this.Versions), loose: true);
-                }
-                return _range;
+                var task = _previousTask.ContinueWith(t => action()
+                    , CancellationToken.None
+                    , TaskContinuationOptions.None
+                    , taskScheduler);
+
+                _previousTask = task;
+
+                return task;
             }
         }
 
-        public bool AffectsVersion(string versionString)
+        public Task<T> QueueTask<T>(Func<T> work)
         {
-            return Range.IsSatisfied(versionString, loose: true);
+            return QueueTask(work, TaskScheduler.Default);
+        }
+
+        public Task<T> QueueTask<T>(Func<T> work, TaskScheduler taskScheduler)
+        {
+            lock (_lock)
+            {
+                var task = _previousTask.ContinueWith(t => work()
+                    , CancellationToken.None
+                    , TaskContinuationOptions.None
+                    , taskScheduler);
+
+                _previousTask = task;
+
+                return task;
+            }
+        }
+
+        public void Dispose()
+        {
+            _previousTask.Dispose();
         }
     }
 }

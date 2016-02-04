@@ -63,29 +63,7 @@ namespace NugetAuditor.Lib
         {
             get
             {
-                var sw = System.Diagnostics.Stopwatch.StartNew();
-
-                var res = this.Vulnerabilities.Where(x => x.AffectsVersion(this.PackageId.VersionString));
-
-                sw.Stop();
-
-                System.Diagnostics.Trace.TraceInformation("Affecting elapsed for package {0}: {1}", this._packageId, sw.Elapsed);
-
-                return res;
-
-                //if (_affectingVulnerabilities == null)
-                //{
-                //    var sw = System.Diagnostics.Stopwatch.StartNew();
-
-                //    _affectingVulnerabilities = this.Vulnerabilities.Where(x => x.AffectsVersion(this.PackageId.VersionString));
-                    
-                //    sw.Stop();
-
-                //    System.Diagnostics.Trace.TraceInformation("Affecting elapsed for package {0}: {1}", this._packageId, sw.Elapsed);
-
-                //}
-
-                //return _affectingVulnerabilities;
+                return this.Vulnerabilities.Where(x => x.AffectsVersion(this.PackageId.VersionString));
             }
         }
 
@@ -108,15 +86,6 @@ namespace NugetAuditor.Lib
                 else
                 {
                     return AuditStatus.HasVulnerabilities;
-
-                    //if (!this.AffectingVulnerabilities.Any())
-                    //{
-                    //    return AuditStatus.HasVulnerabilities;
-                    //}
-                    //else
-                    //{
-                    //    return AuditStatus.Vulnerable;
-                    //}
                 }
             }
         }

@@ -48,7 +48,7 @@ namespace NugetAuditor.Lib.OSSIndex
 
         private void BeforeSerialization(IRestResponse response)
         {
-            if (response.StatusCode == HttpStatusCode.InternalServerError)
+            if (response.StatusCode >= HttpStatusCode.BadRequest)
             {
                 throw new ApiClientException(string.Format("Unexpected response status {0}", (int)response.StatusCode));
             }
@@ -71,7 +71,7 @@ namespace NugetAuditor.Lib.OSSIndex
 
                 if (response.ResponseStatus == ResponseStatus.Error)
                 {
-                    throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+                    throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
                 }
 
                 result.AddRange(response.Data);
@@ -103,7 +103,7 @@ namespace NugetAuditor.Lib.OSSIndex
 
             if (response.ResponseStatus == ResponseStatus.Error)
             {
-                throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+                throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
             }
 
             return response.Data;
@@ -127,7 +127,7 @@ namespace NugetAuditor.Lib.OSSIndex
 
                 if (response.ResponseStatus == ResponseStatus.Error)
                 {
-                    throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+                    throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
                 }
 
                 scms.AddRange(response.Data);
@@ -152,7 +152,7 @@ namespace NugetAuditor.Lib.OSSIndex
 
             if (response.ResponseStatus == ResponseStatus.Error)
             {
-                throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+                throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
             }
 
             return response.Data;
@@ -218,7 +218,7 @@ namespace NugetAuditor.Lib.OSSIndex
 
             if (response.ResponseStatus == ResponseStatus.Error)
             {
-                throw new ApiClientException(response.ErrorMessage, response.ErrorException);
+                throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
             }
 
             return response.Data;

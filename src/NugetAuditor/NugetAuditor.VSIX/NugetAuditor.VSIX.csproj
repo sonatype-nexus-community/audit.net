@@ -59,6 +59,7 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="BackgroundQueue.cs" />
     <Compile Include="VsUtility.cs" />
     <Compile Include="AuditCompletedEventArgs.cs" />
     <Compile Include="EventSinks\SelectionEvents.cs" />
@@ -96,6 +97,14 @@
   <ItemGroup>
     <Content Include="index.html" />
     <Content Include="License.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\logo-200x200.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\logo-32x32.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
