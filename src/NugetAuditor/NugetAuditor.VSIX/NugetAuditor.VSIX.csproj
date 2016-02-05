@@ -66,6 +66,9 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="BackgroundQueue.cs" />
+    <Compile Include="OptionPageGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="VsUtility.cs" />
     <Compile Include="AuditCompletedEventArgs.cs" />
     <Compile Include="EventSinks\SelectionEvents.cs" />

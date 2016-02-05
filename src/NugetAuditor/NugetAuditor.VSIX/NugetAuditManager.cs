@@ -242,7 +242,7 @@ namespace NugetAuditor.VSIX
                     {
                         var affecting = vulnerability.AffectsVersion(packageReference.PackageId.VersionString);
 
-                        var task = new VulnerabilityTask(packageReference)
+                        var task = new VulnerabilityTask(packageReference, vulnerability)
                         {
                             Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
                             ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
@@ -252,7 +252,7 @@ namespace NugetAuditor.VSIX
                             Document = packageReference.File,
                             Line = packageReference.StartLine,
                             Column = packageReference.StartPos,
-                            HelpKeyword = vulnerability.CveId,
+                            //HelpKeyword = vulnerability.CveId
                         };
                         
 
@@ -272,7 +272,20 @@ namespace NugetAuditor.VSIX
 
             if (task != null)
             {
-                var url = string.Format("http://cve.mitre.org/cgi-bin/cvename.cgi?name={0}", task.HelpKeyword);
+                string url;
+
+                if (task.Vulnerability.Uri.StartsWith("http") && Uri.IsWellFormedUriString(task.Vulnerability.Uri, UriKind.Absolute))
+                {
+                    url = task.Vulnerability.Uri;
+                }
+                else if (!string.IsNullOrEmpty(task.Vulnerability.CveId))
+                {
+                    url = string.Format("http://cve.mitre.org/cgi-bin/cvename.cgi?name={0}", task.Vulnerability.CveId);
+                }
+                else
+                {
+                    return;
+                }
 
                 VsShellUtilities.OpenBrowser(url);
             }
@@ -444,7 +457,7 @@ namespace NugetAuditor.VSIX
 
                     try
                     {
-                        results = Lib.NugetAuditor.AuditPackages(packageIds);
+                        results = Lib.NugetAuditor.AuditPackages(packageIds, VSPackage.Instance.Option_CacheSync);
                     }
                     catch (Exception ex)
                     {

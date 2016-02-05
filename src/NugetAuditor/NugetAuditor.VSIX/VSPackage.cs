@@ -60,6 +60,7 @@ namespace NugetAuditor.VSIX
     [Guid(GuidList.guidAuditPkgString)]
     [ProvideAutoLoad(UIContextGuids.SolutionExists)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideOptionPage(typeof(OptionPageGrid), "Audit.Net", "Options", 0, 0, true)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class VSPackage : Package, IDisposable
     {
@@ -130,6 +131,16 @@ namespace NugetAuditor.VSIX
                 return _uiCtx;
             }
         }
+
+        public int Option_CacheSync
+        {
+            get
+            {
+                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+                return page.CacheSync;
+            }
+        }
+
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place

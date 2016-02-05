@@ -27,65 +27,25 @@
 
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace NugetAuditor.VSIX
 {
-    internal class VulnerabilityTask : ErrorTask
+    public class OptionPageGrid : DialogPage
     {
-        private Lib.PackageReference _packageReference;
-        private Lib.OSSIndex.Vulnerability _vulnerability;
-    
-        public Lib.PackageId PackageId
+        private int _cacheSync = 0;
+
+        [Category("Audit.Net")]
+        [DisplayName("Cache timeout (min)")]
+        [Description("Timeout in minutes when accesing OSS Index API (-1=Disabled, 0=Default).")]
+        public int CacheSync
         {
-            get
-            {
-                return _packageReference.PackageId;
-            }
-        }
-
-        public Lib.PackageReference PackageReference
-        {
-            get
-            {
-                return _packageReference;
-            }
-        }
-
-        public Lib.OSSIndex.Vulnerability Vulnerability
-        {
-            get
-            {
-                return _vulnerability;
-            }
-        }
-
-        public void UpdatePackageReference(Lib.PackageReference packageReference)
-        {
-            if (packageReference == null)
-            {
-                throw new ArgumentNullException("packageReference");
-            }
-
-            this._packageReference = packageReference;
-            
-            this.Line = packageReference.StartLine;
-            this.Column = packageReference.StartPos;
-        }
-
-        public VulnerabilityTask(Lib.PackageReference packageReference, Lib.OSSIndex.Vulnerability vulnerability)
-        {
-            if (packageReference == null)
-            {
-                throw new ArgumentNullException("packageReference");
-            }
-
-            if (vulnerability == null)
-            {
-                throw new ArgumentNullException("vulnerability");
-            }
-
-            this._packageReference = packageReference;
-            this._vulnerability = vulnerability;
+            get { return _cacheSync; }
+            set { _cacheSync = value; }
         }
     }
 }
