@@ -90,7 +90,7 @@ namespace NugetAuditor.Lib
 #if (BATCH)
                         project = projects.Where(x => x.Id == artifact.ProjectId).FirstOrDefault();
 #else
-                        scm = client.GetSCM(artifact.ScmId.Value).FirstOrDefault();
+                        project = client.GetProject(artifact.ProjectId.Value).FirstOrDefault();
 #endif
                         if (project != null && project.HasVulnerability)
                         {
