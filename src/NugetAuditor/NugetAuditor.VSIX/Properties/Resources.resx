@@ -136,10 +136,19 @@
     <value>The service '{0}' must be installed for this feature to work. Ensure that this service is available.</value>
   </data>
   <data name="MarkerTipText_VulnarebilitiesFound" xml:space="preserve">
-    <value>Vulnerabilities found in package '{0}'. See error list for details.</value>
+    <value>Vulnerabilities found in package '{0}'. See Error List for details.</value>
+  </data>
+  <data name="NoPackagesToAudit" xml:space="preserve">
+    <value>No package references found to audit.</value>
   </data>
   <data name="NoVulnarebilitiesFound" xml:space="preserve">
     <value>No vulnerabilities found.</value>
+  </data>
+  <data name="PropertyDescriptionCacheSync" xml:space="preserve">
+    <value>Timeout in minutes when accesing OSS Index API (-1=Disabled, 0=Default).</value>
+  </data>
+  <data name="PropertyDisplayNameCacheSync" xml:space="preserve">
+    <value>Cache timeout (min)</value>
   </data>
   <data name="SkippingIgnoredPackage" xml:space="preserve">
     <value>Skipping ignored package '{0}'.</value>

@@ -324,7 +324,7 @@ namespace NugetAuditor.VSIX
             }
             else if (e.Results.Count() == 0)
             {
-                WriteLine("No packages found to audit.");
+                WriteLine(Resources.NoPackagesToAudit);
             }
             else
             {

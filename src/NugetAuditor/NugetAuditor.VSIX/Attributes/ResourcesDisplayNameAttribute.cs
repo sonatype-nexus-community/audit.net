@@ -25,8 +25,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using Microsoft.VisualStudio.Shell;
-using NugetAuditor.VSIX.Attributes;
+using NugetAuditor.VSIX.Properties;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -34,23 +33,39 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NugetAuditor.VSIX
+namespace NugetAuditor.VSIX.Attributes
 {
-    public class OptionPageGrid : DialogPage
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Event)]
+    internal class ResourcesDisplayNameAttribute : DisplayNameAttribute
     {
-        private int _cacheSync = 0;
+        private bool _localized;
 
-        [ResourcesDisplayName("CacheSync")]
-        [ResourcesDescription("CacheSync")]
-        public int CacheSync
+        public ResourcesDisplayNameAttribute(string displayName)
+            : base(displayName)
         {
-            get { return _cacheSync; }
-            set { _cacheSync = value; }
         }
 
-        private void InitializeComponent()
+        public override string DisplayName
         {
+            get
+            {
+                if (!this._localized)
+                {
+                    this._localized = true;
+                    string localizedString = GetLocalizedString(base.DisplayName);
+                    if (localizedString != null)
+                    {
+                        this.DisplayNameValue = localizedString;
+                    }
+                }
 
+                return base.DisplayName;
+            }
+        }
+
+        public virtual string GetLocalizedString(string value)
+        {
+            return (string)Resources.ResourceManager.GetString("PropertyDisplayName" + value, Resources.Culture);
         }
     }
 }

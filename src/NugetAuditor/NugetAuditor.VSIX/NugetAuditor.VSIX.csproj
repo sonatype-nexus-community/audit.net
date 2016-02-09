@@ -65,6 +65,9 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="Attributes\ResourcesCategoryAttribute.cs" />
+    <Compile Include="Attributes\ResourcesDescriptionAttribute.cs" />
+    <Compile Include="Attributes\ResourcesDisplayNameAttribute.cs" />
     <Compile Include="BackgroundQueue.cs" />
     <Compile Include="OptionPageGrid.cs">
       <SubType>Component</SubType>
