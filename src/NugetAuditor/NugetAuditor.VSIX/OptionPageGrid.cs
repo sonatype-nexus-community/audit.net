@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2015-2016, Vör Security Ltd.
+﻿#region License
+// Copyright (c) 2015-2016, Vör Security Ltd.
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -22,20 +23,34 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#endregion
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.Shell;
+using NugetAuditor.VSIX.Attributes;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-[assembly: AssemblyVersion("1.1.*")]
-//[assembly: AssemblyVersion("1.1.0.0")]
-//[assembly: AssemblyFileVersion("1.1.0.0")]
+namespace NugetAuditor.VSIX
+{
+    public class OptionPageGrid : DialogPage
+    {
+        private int _cacheSync = 0;
+
+        [ResourcesDisplayName("CacheSync")]
+        [ResourcesDescription("CacheSync")]
+        public int CacheSync
+        {
+            get { return _cacheSync; }
+            set { _cacheSync = value; }
+        }
+
+        private void InitializeComponent()
+        {
+
+        }
+    }
+}

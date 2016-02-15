@@ -23,19 +23,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-[assembly: AssemblyVersion("1.1.*")]
-//[assembly: AssemblyVersion("1.1.0.0")]
-//[assembly: AssemblyFileVersion("1.1.0.0")]
+namespace NugetAuditor.Lib.OSSIndex
+{
+    /*
+    [
+      {
+        "id": 8396559329,
+        "uri": "https://github.com/jquery/jquery",
+        "name": "JQuery",
+        "description": "jQuery is a cross-platform JavaScript library designed to simplify the client-side scripting of HTML.",
+        "hasVulnerability": true,
+        "vulnerabilities": "http://localhost:8080/v1.1/project/8396559329/vulnerabilities"
+      }
+    ]
+    */
+    public class Project
+    {
+        public long Id { get; set; }
+        public string Uri { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public bool HasVulnerability { get; set; }
+        public string Vulnerabilities { get; set; }
+    }
+}

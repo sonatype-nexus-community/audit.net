@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2015-2016, Vör Security Ltd.
+﻿#region License
+// Copyright (c) 2015-2016, Vör Security Ltd.
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -22,20 +23,49 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#endregion
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using NugetAuditor.VSIX.Properties;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-[assembly: AssemblyVersion("1.1.*")]
-//[assembly: AssemblyVersion("1.1.0.0")]
-//[assembly: AssemblyFileVersion("1.1.0.0")]
+namespace NugetAuditor.VSIX.Attributes
+{
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Event)]
+    internal class ResourcesDisplayNameAttribute : DisplayNameAttribute
+    {
+        private bool _localized;
+
+        public ResourcesDisplayNameAttribute(string displayName)
+            : base(displayName)
+        {
+        }
+
+        public override string DisplayName
+        {
+            get
+            {
+                if (!this._localized)
+                {
+                    this._localized = true;
+                    string localizedString = GetLocalizedString(base.DisplayName);
+                    if (localizedString != null)
+                    {
+                        this.DisplayNameValue = localizedString;
+                    }
+                }
+
+                return base.DisplayName;
+            }
+        }
+
+        public virtual string GetLocalizedString(string value)
+        {
+            return (string)Resources.ResourceManager.GetString("PropertyDisplayName" + value, Resources.Culture);
+        }
+    }
+}

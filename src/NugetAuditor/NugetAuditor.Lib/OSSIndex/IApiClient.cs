@@ -31,6 +31,8 @@ namespace NugetAuditor.Lib.OSSIndex
     {
         IList<SCM> GetSCMs(IEnumerable<long> scmIds);
         IList<SCM> GetSCM(long id);
+        IList<Project> GetProjects(IEnumerable<long> projectIds);
+        IList<Project> GetProject(long id);
         IList<Vulnerability> GetVulnerabilities(long id);
         IList<Artifact> SearchArtifacts(IEnumerable<ArtifactSearch> searches);
         IList<Artifact> SearchArtifact(ArtifactSearch search);

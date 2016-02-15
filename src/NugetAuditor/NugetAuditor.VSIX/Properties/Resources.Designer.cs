@@ -115,11 +115,20 @@ namespace NugetAuditor.VSIX.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Vulnerabilities found in package &apos;{0}&apos;. See error list for details..
+        ///   Looks up a localized string similar to Vulnerabilities found in package &apos;{0}&apos;. See Error List for details..
         /// </summary>
         internal static string MarkerTipText_VulnarebilitiesFound {
             get {
                 return ResourceManager.GetString("MarkerTipText_VulnarebilitiesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No package references found to audit..
+        /// </summary>
+        internal static string NoPackagesToAudit {
+            get {
+                return ResourceManager.GetString("NoPackagesToAudit", resourceCulture);
             }
         }
         
@@ -129,6 +138,24 @@ namespace NugetAuditor.VSIX.Properties {
         internal static string NoVulnarebilitiesFound {
             get {
                 return ResourceManager.GetString("NoVulnarebilitiesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timeout in minutes when accesing OSS Index API (-1=Disabled, 0=Default)..
+        /// </summary>
+        internal static string PropertyDescriptionCacheSync {
+            get {
+                return ResourceManager.GetString("PropertyDescriptionCacheSync", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cache timeout (min).
+        /// </summary>
+        internal static string PropertyDisplayNameCacheSync {
+            get {
+                return ResourceManager.GetString("PropertyDisplayNameCacheSync", resourceCulture);
             }
         }
         

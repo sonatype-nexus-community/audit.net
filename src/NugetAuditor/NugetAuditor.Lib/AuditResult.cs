@@ -36,7 +36,7 @@ namespace NugetAuditor.Lib
     {
         private PackageId _packageId;
         private Artifact _artifact;
-        private SCM _scm;
+        private Project _project;
         private IEnumerable<Vulnerability> _vulnerabilities;
         
         public PackageId PackageId
@@ -75,11 +75,11 @@ namespace NugetAuditor.Lib
                 {
                     return AuditStatus.UnknownPackage;
                 }
-                else if (this._scm == null)
+                else if (this._project == null)
                 {
                     return AuditStatus.UnknownSource;
                 }
-                else if (this._scm.HasVulnerability == false)
+                else if (this._project.HasVulnerability == false)
                 {
                     return AuditStatus.NoKnownVulnerabilities;
                 }
@@ -100,11 +100,11 @@ namespace NugetAuditor.Lib
             this._packageId = packageId;
         }
 
-        public AuditResult(PackageId packageId, Artifact artifact, SCM scm, IList<Vulnerability> vulnerabilities)
+        public AuditResult(PackageId packageId, Artifact artifact, Project project, IList<Vulnerability> vulnerabilities)
             : this(packageId)
         {
             this._artifact = artifact;
-            this._scm = scm;
+            this._project = project;
             this._vulnerabilities = vulnerabilities;
         }
     }    

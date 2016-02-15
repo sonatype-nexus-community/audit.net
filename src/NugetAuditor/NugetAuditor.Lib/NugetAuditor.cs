@@ -63,12 +63,12 @@ namespace NugetAuditor.Lib
 #if (BATCH)
             var artifactSearches = packageIds.Select(x => new NugetArtifactSearch() { name = x.Id, version = x.VersionString });
             var artifacts = client.SearchArtifacts(artifactSearches);
-            var scms = client.GetSCMs(artifacts.Where(x => x.ScmId.HasValue).Select(x => x.ScmId.Value).Distinct());
+            var projects = client.GetProjects(artifacts.Where(x => x.ProjectId.HasValue).Select(x => x.ProjectId.Value).Distinct());
 #endif
             foreach (var packageId in packageIds)
             {
                 Lib.OSSIndex.Artifact artifact = null;
-                Lib.OSSIndex.SCM scm = null;
+                Lib.OSSIndex.Project project = null;
                 IList<Lib.OSSIndex.Vulnerability> vulnerabilities = null;
 #if (!BATCH)
                 try
@@ -85,16 +85,16 @@ namespace NugetAuditor.Lib
                         artifact = artifacts.FirstOrDefault(x => x.Search.Contains(packageId.Id) && x.Search.Contains(packageId.VersionString));
                     }
 
-                    if (artifact != null && artifact.ScmId.HasValue)
+                    if (artifact != null && artifact.ProjectId.HasValue)
                     {
 #if (BATCH)
-                        scm = scms.Where(x => x.Id == artifact.ScmId).FirstOrDefault();
+                        project = projects.Where(x => x.Id == artifact.ProjectId).FirstOrDefault();
 #else
-                        scm = client.GetSCM(artifact.ScmId.Value).FirstOrDefault();
+                        project = client.GetProject(artifact.ProjectId.Value).FirstOrDefault();
 #endif
-                        if (scm != null && scm.HasVulnerability)
+                        if (project != null && project.HasVulnerability)
                         {
-                            vulnerabilities = client.GetVulnerabilities(scm.Id);
+                            vulnerabilities = client.GetVulnerabilities(project.Id);
                         }
                     }
 
@@ -105,7 +105,7 @@ namespace NugetAuditor.Lib
                     System.Diagnostics.Trace.TraceError("ApiClient call failed. \n{0}", e.ToString());
                 }
 #endif
-                yield return new AuditResult(packageId, artifact, scm, vulnerabilities);
+                yield return new AuditResult(packageId, artifact, project, vulnerabilities);
             }
         }
 

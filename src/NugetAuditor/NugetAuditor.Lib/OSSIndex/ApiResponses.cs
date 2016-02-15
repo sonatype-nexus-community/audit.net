@@ -41,6 +41,11 @@ namespace NugetAuditor.Lib.OSSIndex
 
     }
 
+    internal class ProjectResponse : ApiResponse<Project>
+    {
+
+    }
+
     internal class VulnerabilityResponse : ApiResponse<Vulnerability>
     {
 
