@@ -25,7 +25,39 @@ Audit.NET installation has been tested on Microsoft Visual Studio Community 2015
 
 ## Usage ##
 
+### Startup ###
+
 1. Start Visual Studio on a solution
 2. Once the solution has loaded, Audit.NET will automatically run against the solution.
-    3. If there are no known vulnerabilities you will see a message in the "Output" tab indicating the number of packages checked.
-    4. 
+    1. If there are no known vulnerabilities you will see a message in the "Output" tab indicating the number of packages checked.
+    2. If there *are* vulnerabilities the "Error List" will be brought to the front indicating the vulnerabilities found.
+
+### New Packages ###
+
+1. Select the "Tools->NuGet Package Manager->Manage NuGet Packages for Solution" menu item
+2. The NuGet package manager will open
+3. Browser for new packages and install them as appropriate
+4. Once installation has completed Audit.NET will run against the new package(s)
+    1. If there are no known vulnerabilities you will see a message in the "Output" tab indicating the number of packages checked.
+    2. If there *are* vulnerabilities the "Error List" will be brought to the front indicating the vulnerabilities found.
+
+### Running Audit.NET manually ###
+
+1. In the Solution Explorer, select the solution or a project
+2. Select the "Project->Audit NuGet Packages" menu item
+3. Audit.NET will run against the package(s)
+    1. If there are no known vulnerabilities you will see a message in the "Output" tab indicating the number of packages checked.
+    2. If there *are* vulnerabilities the "Error List" will be brought to the front indicating the vulnerabilities found.
+
+### Viewing Errors ###
+
+1. Click the "Error List" tab
+2. Audit.NET vulnerabilities will appear in the list with one of two icons:
+    1. A red "X" indicates an active vulnerability in the installed package
+    2. A blue "i" indicates a past vulnerability that is not expected to affect the installed package
+3. Double click on an error to open the package.config file with the vulnerable package
+4. The vulnerable package will be underlined in red
+5. Resolve the problem either by using the NuGet package manager, or by hand editing the packages.config
+6. If you hand edit the packages.config file you will have to run Audit.NET manually to clear the error
+
+
