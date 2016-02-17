@@ -242,25 +242,28 @@ namespace NugetAuditor.VSIX
                     {
                         var affecting = vulnerability.AffectsVersion(packageReference.PackageId.VersionString);
 
-                        var task = new VulnerabilityTask(packageReference, vulnerability)
+                        if (affecting)
                         {
-                            Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
-                            ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
-                            Text = string.Format("{0}: {1}\n{2}", packageReference.PackageId, vulnerability.Title, vulnerability.Summary),
-                            HierarchyItem = projectHierarchy,
-                            Category = TaskCategory.Misc,
-                            Document = packageReference.File,
-                            Line = packageReference.StartLine,
-                            Column = packageReference.StartPos,
-                            //HelpKeyword = vulnerability.CveId
-                        };
-                        
+                            var task = new VulnerabilityTask(packageReference, vulnerability)
+                            {
+                                Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
+                                ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
+                                Text = string.Format("{0}: {1}\n{2}", packageReference.PackageId, vulnerability.Title, vulnerability.Summary),
+                                HierarchyItem = projectHierarchy,
+                                Category = TaskCategory.Misc,
+                                Document = packageReference.File,
+                                Line = packageReference.StartLine,
+                                Column = packageReference.StartPos,
+                                //HelpKeyword = vulnerability.CveId
+                            };
 
-                        task.Navigate += Task_Navigate;
-                        task.Removed += Task_Removed;
-                        task.Help += Task_Help;
 
-                        yield return task;
+                            task.Navigate += Task_Navigate;
+                            task.Removed += Task_Removed;
+                            task.Help += Task_Help;
+
+                            yield return task;
+                        }
                     }
                 }
             }
