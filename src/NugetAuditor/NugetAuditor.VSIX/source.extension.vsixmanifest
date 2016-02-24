@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="Audit.Net.VörSecurity.747b4e5e-2181-432b-bc9c-5f196551e328" Version="1.2.5" Language="en-US" Publisher="Vör Security Ltd." />
+    <Identity Id="Audit.Net.VörSecurity.747b4e5e-2181-432b-bc9c-5f196551e328" Version="1.2.7" Language="en-US" Publisher="Vör Security Ltd." />
     <DisplayName>Audit.Net</DisplayName>
     <Description>This package detects and audits installed nuget packages.</Description>
     <MoreInfo>http://ossindex.net/</MoreInfo>
