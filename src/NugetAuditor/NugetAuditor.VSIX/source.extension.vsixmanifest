@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="Audit.Net.VörSecurity.747b4e5e-2181-432b-bc9c-5f196551e328" Version="1.2.7" Language="en-US" Publisher="Vör Security Ltd." />
+    <Identity Id="Audit.Net.VörSecurity.747b4e5e-2181-432b-bc9c-5f196551e328" Version="1.2.8" Language="en-US" Publisher="Vör Security Ltd." />
     <DisplayName>Audit.Net</DisplayName>
-    <Description>This package detects and audits installed nuget packages.</Description>
+    <Description xml:space="preserve">This package detects and audits installed nuget packages.</Description>
     <MoreInfo>http://ossindex.net/</MoreInfo>
     <License>License.txt</License>
     <Icon>Resources\logo-32x32.png</Icon>
@@ -14,7 +14,6 @@
   </Installation>
   <Dependencies>
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
-    <Dependency Id="Microsoft.VisualStudio.MPF.14.0" DisplayName="Visual Studio MPF 14.0" d:Source="Installed" Version="[14.0]" />
   </Dependencies>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
