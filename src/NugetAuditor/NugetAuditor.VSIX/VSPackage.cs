@@ -98,10 +98,15 @@ namespace NugetAuditor.VSIX
                 return this._auditManager;
             }
         }
-
+       
         public static void AssertOnMainThread()
         {
-            ThreadHelper.ThrowIfNotOnUIThread("AssertOnMainThread");
+            if (!ThreadHelper.CheckAccess())
+            {
+                throw new COMException(string.Format("{0} must be called on the UI thread.", "AssertOnMainThread"), -2147417842);
+            }
+
+            //ThreadHelper.ThrowIfNotOnUIThread("AssertOnMainThread");
         }
 
         /// <summary>
