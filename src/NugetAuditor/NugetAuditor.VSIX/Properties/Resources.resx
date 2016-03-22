@@ -154,6 +154,6 @@
     <value>Skipping ignored package '{0}'.</value>
   </data>
   <data name="VulnerabilitiesFound" xml:space="preserve">
-    <value>Vulnerabilities found in {0} package(s). See Error List for details.</value>
+    <value>Vulnerability history found for {0} package(s). See Error List for active vulnerability details.</value>
   </data>
 </root>

@@ -169,7 +169,7 @@ namespace NugetAuditor.VSIX.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Vulnerabilities found in {0} package(s). See Error List for details..
+        ///   Looks up a localized string similar to Vulnerability history found for {0} package(s). See Error List for active vulnerability details..
         /// </summary>
         internal static string VulnerabilitiesFound {
             get {
