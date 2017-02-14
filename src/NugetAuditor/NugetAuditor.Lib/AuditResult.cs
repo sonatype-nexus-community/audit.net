@@ -35,9 +35,7 @@ namespace NugetAuditor.Lib
     public class AuditResult
     {
         private PackageId _packageId;
-        private Artifact _artifact;
-        private Project _project;
-        private IEnumerable<Vulnerability> _vulnerabilities;
+        private Package _package;
         
         public PackageId PackageId
         {
@@ -47,23 +45,26 @@ namespace NugetAuditor.Lib
             }
         }
 
-        public IEnumerable<Vulnerability> Vulnerabilities
-        {
-            get
-            {
-                if (this._vulnerabilities == null)
-                {
-                    this._vulnerabilities = Enumerable.Empty<Vulnerability>();
-                }
-                return this._vulnerabilities;
-            }
-        }
+		public int TotalVulnerabilites
+		{
+			get {
+				return this._package.VulnerabilityTotal;
+			}
+		}
 
-        public IEnumerable<Vulnerability> AffectingVulnerabilities
+		public int MatchedVulnerabilities
+		{
+			get
+			{
+				return this._package.VulnerabilityMatches;
+			}
+		}
+
+		public IEnumerable<Vulnerability> Vulnerabilities
         {
             get
             {
-                return this.Vulnerabilities.Where(x => x.AffectsVersion(this.PackageId.VersionString));
+				return this._package.Vulnerabilities ?? Enumerable.Empty<Vulnerability>();
             }
         }
 
@@ -71,15 +72,11 @@ namespace NugetAuditor.Lib
         {
             get
             {
-                if (this._artifact == null)
+                if (this._package == null)
                 {
                     return AuditStatus.UnknownPackage;
                 }
-                else if (this._project == null)
-                {
-                    return AuditStatus.UnknownSource;
-                }
-                else if (this._project.HasVulnerability == false)
+                else if (this._package.VulnerabilityTotal == 0)
                 {
                     return AuditStatus.NoKnownVulnerabilities;
                 }
@@ -100,12 +97,10 @@ namespace NugetAuditor.Lib
             this._packageId = packageId;
         }
 
-        public AuditResult(PackageId packageId, Artifact artifact, Project project, IList<Vulnerability> vulnerabilities)
+        public AuditResult(PackageId packageId, Package package)
             : this(packageId)
         {
-            this._artifact = artifact;
-            this._project = project;
-            this._vulnerabilities = vulnerabilities;
+            this._package = package;
         }
     }    
 }

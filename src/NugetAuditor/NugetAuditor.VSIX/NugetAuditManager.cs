@@ -240,7 +240,7 @@ namespace NugetAuditor.VSIX
 
                     foreach (var vulnerability in auditResult.Vulnerabilities)
                     {
-                        var affecting = vulnerability.AffectsVersion(packageReference.PackageId.VersionString);
+						var affecting = true; // vulnerability.AffectsVersion(packageReference.PackageId.VersionString);
 
                         if (affecting)
                         {
@@ -248,7 +248,7 @@ namespace NugetAuditor.VSIX
                             {
                                 Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
                                 ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
-                                Text = string.Format("{0}: {1}\n{2}", packageReference.PackageId, vulnerability.Title, vulnerability.Summary),
+                                Text = string.Format("{0}: {1}\n{2}", packageReference.PackageId, vulnerability.Title, vulnerability.Description),
                                 HierarchyItem = projectHierarchy,
                                 Category = TaskCategory.Misc,
                                 Document = packageReference.File,
@@ -277,13 +277,13 @@ namespace NugetAuditor.VSIX
             {
                 string url;
 
-                if (task.Vulnerability.Uri.StartsWith("http") && Uri.IsWellFormedUriString(task.Vulnerability.Uri, UriKind.Absolute))
+                if (task.Vulnerability.References.Any())
                 {
-                    url = task.Vulnerability.Uri;
+                    url = task.Vulnerability.References.First();
                 }
-                else if (!string.IsNullOrEmpty(task.Vulnerability.CveId))
+                else if (!string.IsNullOrEmpty(task.Vulnerability.CVE))
                 {
-                    url = string.Format("http://cve.mitre.org/cgi-bin/cvename.cgi?name={0}", task.Vulnerability.CveId);
+                    url = string.Format("http://cve.mitre.org/cgi-bin/cvename.cgi?name={0}", task.Vulnerability.CVE);
                 }
                 else
                 {

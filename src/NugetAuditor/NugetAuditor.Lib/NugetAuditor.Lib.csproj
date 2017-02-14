@@ -71,7 +71,6 @@
     <Compile Include="OSSIndex\ApiError.cs" />
     <Compile Include="OSSIndex\ApiClientException.cs" />
     <Compile Include="OSSIndex\ApiResponse.cs" />
-    <Compile Include="OSSIndex\Artifact.cs" />
     <Compile Include="ArtifactSearch.cs" />
     <Compile Include="AuditResult.cs" />
     <Compile Include="AuditStatus.cs" />
@@ -80,12 +79,11 @@
     <Compile Include="OSSIndex\ApiResponses.cs" />
     <Compile Include="OSSIndex\IApiClient.cs" />
     <Compile Include="OSSIndex\ApiClient.cs" />
-    <Compile Include="OSSIndex\Project.cs" />
+    <Compile Include="OSSIndex\Package.cs" />
     <Compile Include="PackageId.cs" />
     <Compile Include="PackageReference.cs" />
     <Compile Include="PackageReferencesFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="OSSIndex\SCM.cs" />
     <Compile Include="OSSIndex\Vulnerability.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -54,50 +54,26 @@ namespace NugetAuditor.Lib
             }
         }
 
-        private static IEnumerable<AuditResult> AuditPackagesImpl(IEnumerable<PackageId> packages, int cacheSync)
+        private static IEnumerable<AuditResult> AuditPackagesImpl(IEnumerable<PackageId> packageIds, int cacheSync)
         {
             var cachePolicy = CachePolicy(cacheSync);
             var client = new OSSIndex.ApiClient(cachePolicy) as Lib.OSSIndex.IApiClient;
 
-            var packageIds = packages.ToList();
 #if (BATCH)
-            var artifactSearches = packageIds.Select(x => new NugetArtifactSearch() { name = x.Id, version = x.VersionString });
-            var artifacts = client.SearchArtifacts(artifactSearches);
-            var projects = client.GetProjects(artifacts.Where(x => x.ProjectId.HasValue).Select(x => x.ProjectId.Value).Distinct());
+            var packageSearches = packageIds.Select(x => new NugetPackageSearch() { name = x.Id, version = x.VersionString });
+            var packages = client.SearchPackages(packageSearches);
 #endif
             foreach (var packageId in packageIds)
             {
-                Lib.OSSIndex.Artifact artifact = null;
-                Lib.OSSIndex.Project project = null;
-                IList<Lib.OSSIndex.Vulnerability> vulnerabilities = null;
+                Lib.OSSIndex.Package package = null;
 #if (!BATCH)
                 try
                 {
-                    var search = new NugetArtifactSearch() { name = packageId.Id, version = packageId.VersionString };
-                    var artifacts = client.SearchArtifact(search);
+                    var search = new NugetPackageSearch() { name = packageId.Id, version = packageId.VersionString };
+                    var packages = client.SearchPackage(search);
 #endif
-                    //find first by exact version
-                    artifact = artifacts.FirstOrDefault(x => x.Name == packageId.Id && x.Version == packageId.VersionString);
-
-                    if (artifact == null)
-                    {
-                        //find first by search version
-                        artifact = artifacts.FirstOrDefault(x => x.Search.Contains(packageId.Id) && x.Search.Contains(packageId.VersionString));
-                    }
-
-                    if (artifact != null && artifact.ProjectId.HasValue)
-                    {
-#if (BATCH)
-                        project = projects.Where(x => x.Id == artifact.ProjectId).FirstOrDefault();
-#else
-                        project = client.GetProject(artifact.ProjectId.Value).FirstOrDefault();
-#endif
-                        if (project != null && project.HasVulnerability)
-                        {
-                            vulnerabilities = client.GetVulnerabilities(project.Id);
-                        }
-                    }
-
+					//find first 
+					package = packages.FirstOrDefault(x => x.Name == packageId.Id);
 #if (!BATCH)
                 }
                 catch (ApiClientException e)
@@ -105,7 +81,7 @@ namespace NugetAuditor.Lib
                     System.Diagnostics.Trace.TraceError("ApiClient call failed. \n{0}", e.ToString());
                 }
 #endif
-                yield return new AuditResult(packageId, artifact, project, vulnerabilities);
+                yield return new AuditResult(packageId, package);
             }
         }
 

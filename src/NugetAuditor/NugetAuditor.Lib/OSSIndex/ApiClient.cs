@@ -43,7 +43,7 @@ namespace NugetAuditor.Lib.OSSIndex
         { }
 
         public ApiClient(HttpRequestCachePolicy cachePolicy)
-            : base("https://ossindex.net/v1.1", cachePolicy)
+            : base("https://ossindex.net/v2.0", cachePolicy)
         { }
 
         private void BeforeSerialization(IRestResponse response)
@@ -54,20 +54,20 @@ namespace NugetAuditor.Lib.OSSIndex
             }
         }
 
-        public IList<Artifact> SearchArtifacts(IEnumerable<ArtifactSearch> searches)
+        public IList<Package> SearchPackages(IEnumerable<PackageSearch> searches)
         {
-            var result = new List<Artifact>(searches.Count());
+            var result = new List<Package>(searches.Count());
 
             while (searches.Any())
             {
                 var request = new RestRequest(Method.POST);
 
-                request.Resource = "search/artifact/";
+                request.Resource = "package";
                 request.RequestFormat = DataFormat.Json;
                 request.OnBeforeDeserialization = BeforeSerialization;
                 request.AddBody(searches.Take(this._pageSize));
 
-                var response = Execute<ArtifactResponse>(request);
+                var response = Execute<PackageResponse>(request);
 
                 if (response.ResponseStatus == ResponseStatus.Error)
                 {
@@ -82,16 +82,16 @@ namespace NugetAuditor.Lib.OSSIndex
             return result;
         }
 
-        public IList<Artifact> SearchArtifact(ArtifactSearch search)
+        public IList<Package> SearchPackage(PackageSearch search)
         {
-            return SearchArtifact(search.pm, search.name, search.version);
+            return SearchPackage(search.pm, search.name, search.version);
         }
 
-        public IList<Artifact> SearchArtifact(string pm, string name, string version)
+        public IList<Package> SearchPackage(string pm, string name, string version)
         {
             var request = new RestRequest(Method.GET);
 
-            request.Resource = "search/artifact/{pm}/{name}/{version}";
+            request.Resource = "package/{pm}/{name}/{version}";
             request.RequestFormat = DataFormat.Json;
             request.OnBeforeDeserialization = BeforeSerialization;
 
@@ -99,7 +99,7 @@ namespace NugetAuditor.Lib.OSSIndex
             request.AddParameter("name", name, ParameterType.UrlSegment);
             request.AddParameter("version", version, ParameterType.UrlSegment);
 
-            var response = Execute<ArtifactResponse>(request);
+            var response = Execute<PackageResponse>(request);
 
             if (response.ResponseStatus == ResponseStatus.Error)
             {
@@ -108,120 +108,5 @@ namespace NugetAuditor.Lib.OSSIndex
 
             return response.Data;
         }
-
-        public IList<SCM> GetSCMs(IEnumerable<long> scmIds)
-        {
-            var scms = new List<SCM>(scmIds.Count());
-
-            while (scmIds.Any())
-            {
-                var request = new RestRequest(Method.GET);
-
-                request.Resource = "scm/{id}";
-                request.RequestFormat = DataFormat.Json;
-                request.OnBeforeDeserialization = BeforeSerialization;
-
-                request.AddParameter("id", string.Join(",", scmIds.Take(this._pageSize)), ParameterType.UrlSegment);
-
-                var response = Execute<SCMResponse>(request);
-
-                if (response.ResponseStatus == ResponseStatus.Error)
-                {
-                    throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
-                }
-
-                scms.AddRange(response.Data);
-
-                scmIds = scmIds.Skip(this._pageSize);
-            }
-
-            return scms;
-        }
-
-        public IList<SCM> GetSCM(long scmId)
-        {
-            var request = new RestRequest(Method.GET);
-
-            request.Resource = "scm/{id}";
-            request.RequestFormat = DataFormat.Json;
-            request.OnBeforeDeserialization = BeforeSerialization;
-
-            request.AddParameter("id", scmId.ToString(), ParameterType.UrlSegment);
-
-            var response = Execute<SCMResponse>(request);
-
-            if (response.ResponseStatus == ResponseStatus.Error)
-            {
-                throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
-            }
-
-            return response.Data;
-        }
-
-        public IList<Project> GetProjects(IEnumerable<long> projectIds)
-        {
-            var projects = new List<Project>(projectIds.Count());
-
-            while (projectIds.Any())
-            {
-                var request = new RestRequest(Method.GET);
-
-                request.Resource = "project/{id}";
-                request.RequestFormat = DataFormat.Json;
-                request.OnBeforeDeserialization = BeforeSerialization;
-
-                request.AddParameter("id", string.Join(",", projectIds.Take(this._pageSize)), ParameterType.UrlSegment);
-
-                var response = Execute<ProjectResponse>(request);
-
-                if (response.ResponseStatus == ResponseStatus.Error)
-                {
-                    throw new ApiClientException(response.ErrorMessage, response.ErrorException);
-                }
-
-                projects.AddRange(response.Data);
-
-                projectIds = projectIds.Skip(this._pageSize);
-            }
-
-            return projects;
-        }
-
-        public IList<Project> GetProject(long projectId)
-        {
-            var request = new RestRequest(Method.GET);
-
-            request.Resource = "project/{id}";
-            request.RequestFormat = DataFormat.Json;
-            request.OnBeforeDeserialization = BeforeSerialization;
-
-            request.AddParameter("id", projectId.ToString(), ParameterType.UrlSegment);
-
-            var response = Execute<ProjectResponse>(request);
-
-            if (response.ResponseStatus == ResponseStatus.Error)
-            {
-                throw new ApiClientException(response.ErrorMessage, response.ErrorException);
-            }
-
-            return response.Data;
-        }
-
-        public IList<Vulnerability> GetVulnerabilities(long scmId)
-        {
-            var request = new RestRequest(Method.GET);
-
-            request.Resource = "project/{id}/vulnerabilities";
-            request.AddParameter("id", scmId, ParameterType.UrlSegment);
-
-            var response = Execute<VulnerabilityResponse>(request);
-
-            if (response.ResponseStatus == ResponseStatus.Error)
-            {
-                throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
-            }
-
-            return response.Data;
-        }      
     }
 }

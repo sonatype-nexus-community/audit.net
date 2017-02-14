@@ -99,7 +99,7 @@ namespace NugetAuditor.ConsoleApp
                             }
                         case Lib.AuditStatus.HasVulnerabilities:
                             {
-                                if (auditResult.AffectingVulnerabilities.Any())
+                                if (auditResult.Vulnerabilities.Any())
                                 {
                                     vulnerablePackages++;
                                     Console.ForegroundColor = ConsoleColor.Red;
@@ -108,14 +108,14 @@ namespace NugetAuditor.ConsoleApp
                                 }
 
                                 Console.ForegroundColor = ConsoleColor.Yellow;
-                                Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.Vulnerabilities.Count(), auditResult.AffectingVulnerabilities.Count());
+                                Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.TotalVulnerabilites, auditResult.MatchedVulnerabilities);
                                 Console.ResetColor();
 
-                                foreach (var item in auditResult.AffectingVulnerabilities)
+                                foreach (var item in auditResult.Vulnerabilities)
                                 {
                                     Console.WriteLine();
                                     Console.WriteLine(item.Title);
-                                    Console.WriteLine(item.Summary);
+                                    Console.WriteLine(item.Description);
                                 }
 
                                 break;

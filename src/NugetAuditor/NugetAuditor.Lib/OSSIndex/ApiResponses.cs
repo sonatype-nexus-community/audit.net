@@ -31,22 +31,7 @@ using System.Threading.Tasks;
 
 namespace NugetAuditor.Lib.OSSIndex
 {
-    internal class ArtifactResponse : ApiResponse<Artifact>
-    {
-
-    }
-
-    internal class SCMResponse : ApiResponse<SCM>
-    {
-
-    }
-
-    internal class ProjectResponse : ApiResponse<Project>
-    {
-
-    }
-
-    internal class VulnerabilityResponse : ApiResponse<Vulnerability>
+    internal class PackageResponse : ApiResponse<Package>
     {
 
     }

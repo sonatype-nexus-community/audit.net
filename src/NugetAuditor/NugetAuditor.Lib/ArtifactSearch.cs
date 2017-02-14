@@ -31,20 +31,20 @@ using System.Threading.Tasks;
 
 namespace NugetAuditor.Lib
 {
-    public class NugetArtifactSearch : ArtifactSearch
+    public class NugetPackageSearch : PackageSearch
     {
-        public NugetArtifactSearch() : base("nuget")
+        public NugetPackageSearch() : base("nuget")
         {
         }
     }
 
-    public abstract class ArtifactSearch
+    public abstract class PackageSearch
     {
         public string pm { get; private set; }
         public string name { get; set; }
         public string version { get; set; }
 
-        public ArtifactSearch(string packageManager)
+        public PackageSearch(string packageManager)
         {
             this.pm = packageManager;
         }
