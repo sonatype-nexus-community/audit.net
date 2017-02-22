@@ -142,11 +142,21 @@ namespace NugetAuditor.VSIX
             // TODO: Find a better way to detect support for NuGet packages.
             try
             {
-                ServiceLocator.GetInstance<IVsPackageInstallerServices>().IsPackageInstalled(project, "__dummy__");
+                // FIXME: This should not happen
+                if (project == null) return false;
+                IVsPackageInstallerServices locator = ServiceLocator.GetInstance<IVsPackageInstallerServices>();
+                // FIXME: This should not happen
+                if (locator == null) return false;
+                locator.IsPackageInstalled(project, "__dummy__");
                 return true;
             }
             catch (InvalidOperationException)
             {
+                return false;
+            }
+            catch (NullReferenceException)
+            {
+                // FIXME: This is a terrible kludge
                 return false;
             }
         }
