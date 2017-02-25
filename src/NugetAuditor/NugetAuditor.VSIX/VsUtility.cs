@@ -46,7 +46,22 @@ namespace NugetAuditor.VSIX
 {
     internal static class VsUtility
     {
-        internal static IVsHierarchy GetHierarchy(this Project project)
+		private static readonly HashSet<string> _supportedProjectTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		{
+			VsConstants.WebSiteProjectTypeGuid,
+			VsConstants.CsharpProjectTypeGuid,
+			VsConstants.VbProjectTypeGuid,
+			VsConstants.CppProjectTypeGuid,
+			VsConstants.JsProjectTypeGuid,
+			VsConstants.FsharpProjectTypeGuid,
+			VsConstants.NemerleProjectTypeGuid,
+			VsConstants.WixProjectTypeGuid,
+			VsConstants.SynergexProjectTypeGuid,
+			VsConstants.NomadForVisualStudioProjectTypeGuid,
+			VsConstants.DxJsProjectTypeGuid
+		};
+
+		internal static IVsHierarchy GetHierarchy(this Project project)
         {
             IVsHierarchy hierarchy = null;
 
@@ -132,9 +147,14 @@ namespace NugetAuditor.VSIX
             }
         }
 
-        internal static bool IsProjectSupported(Project project)
+        internal static bool IsProjectSupported(this Project project)
         {
             VSPackage.AssertOnMainThread();
+
+			if (project.Kind != null && _supportedProjectTypes.Contains(project.Kind)) {
+				return true;
+			}
+
             // Check if packages.config exists
             //return File.Exists(project.GetPackageReferenceFilePath());
 
@@ -145,18 +165,72 @@ namespace NugetAuditor.VSIX
                 ServiceLocator.GetInstance<IVsPackageInstallerServices>().IsPackageInstalled(project, "__dummy__");
                 return true;
             }
-            catch (InvalidOperationException)
+			catch (InvalidOperationException)
             {
                 return false;
             }
-        }
+			catch (Exception e)
+			{
+				ExceptionHelper.WriteToActivityLog(e);
+				return false;
+			}
+		}
 
         internal static bool IsProjectUnloaded(this Project project)
         {
             return project.Kind.Equals(EnvDTE.Constants.vsProjectKindUnmodeled, StringComparison.OrdinalIgnoreCase);
         }
 
-        internal static IEnumerable<Project> GetSupportedProjects(this Solution solution)
+		internal static IEnumerable<Project> GetProjects(this Solution solution)
+		{
+			if (solution == null || !solution.IsOpen)
+			{
+				yield break;
+			}
+
+			Stack<Project> source = new Stack<Project>();
+
+			foreach (Project project in solution.Projects)
+			{
+				source.Push(project);
+			}
+
+			while (source.Any())
+			{
+				Project project = source.Pop();
+
+				if (VsUtility.IsProjectUnloaded(project))
+				{
+					continue;
+				}
+				
+				yield return project;
+
+				try
+				{
+					var projectItems = project.ProjectItems;
+
+					if (projectItems == null)
+					{
+						continue;
+					}
+
+					foreach (ProjectItem projectItem in projectItems)
+					{
+						if (projectItem.SubProject != null)
+						{
+							source.Push(projectItem.SubProject);
+						}
+					}
+				}
+				catch (NotImplementedException)
+				{
+					continue;
+				}
+			}
+		}
+
+		internal static IEnumerable<Project> GetSupportedProjects(this Solution solution)
         {
             if (solution == null || !solution.IsOpen)
             {

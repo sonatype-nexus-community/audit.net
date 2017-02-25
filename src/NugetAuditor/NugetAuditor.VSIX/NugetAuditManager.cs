@@ -52,12 +52,16 @@ namespace NugetAuditor.VSIX
         private DocumentEvents _documentEvents;
 
         private IVsPackageInstallerEvents _packageInstallerEvents;
-        private VsSelectionEvents _selectionEvents;
+		//private IVsPackageInstallerProjectEvents _packageInstallerProjectEvents;
+		private VsSelectionEvents _selectionEvents;
 
         private BackgroundQueue _backgroundQueue = new BackgroundQueue();
         private TTasks.TaskScheduler _uiTaskScheduler;
 
         private Dictionary<PackageId, AuditResult> _auditResults = new Dictionary<PackageId, AuditResult>(EqualityComparer<PackageId>.Default);
+
+		private Timer _refreshTimer;
+		private const int _refreshTimeout = 2000;
 
         private bool _auditRunning = false;
 
@@ -76,18 +80,21 @@ namespace NugetAuditor.VSIX
             _uiTaskScheduler = TTasks.TaskScheduler.FromCurrentSynchronizationContext();
             _taskProvider = new VulnerabilityTaskProvider(this._serviceProvider);
             _markerProvider = new PackageReferenceMarkerProvider(_taskProvider);
+			_refreshTimer = new Timer(new TimerCallback(RefreshTimer), null, Timeout.Infinite, Timeout.Infinite);
 
             _selectionEvents = new EventSinks.VsSelectionEvents(VSPackage.Instance.MonitorSelection);
             _selectionEvents.SolutionOpened += SelectionEvents_SolutionOpened;
 
-            _packageInstallerEvents = ServiceLocator.GetInstance<IVsPackageInstallerEvents>();
+			_packageInstallerEvents = ServiceLocator.GetInstance<IVsPackageInstallerEvents>();
 
-            if (_packageInstallerEvents == null)
+			if (_packageInstallerEvents == null)
             {
                 throw new InvalidOperationException(string.Format(Resources.Culture, Resources.General_MissingService, typeof(IVsPackageInstallerEvents).FullName));
             }
-            
-            _packageInstallerEvents.PackageReferenceAdded += InstallerEvents_PackageReferenceAdded;
+
+			_packageInstallerEvents.PackageInstalled += InstallerEvents_PackageInstalled;
+			_packageInstallerEvents.PackageUninstalled += InstallerEvents_PackageUninstalled;
+			_packageInstallerEvents.PackageReferenceAdded += InstallerEvents_PackageReferenceAdded;
             _packageInstallerEvents.PackageReferenceRemoved += InstallerEvents_PackageReferenceRemoved;
 
             _dte = ServiceLocator.GetInstance<DTE>();
@@ -99,18 +106,18 @@ namespace NugetAuditor.VSIX
 
             _documentEvents = _dte.Events.DocumentEvents;
 
-            _documentEvents.DocumentOpened += OnDocumentOpened;
+			_documentEvents.DocumentOpened += OnDocumentOpened;
             _documentEvents.DocumentClosing += OnDocumentClosing;
-        }
+		}
 
-        private void SelectionEvents_SolutionOpened(object sender, EventArgs e)
+		private void SelectionEvents_SolutionOpened(object sender, EventArgs e)
         {
-            _backgroundQueue.QueueTask(async () => 
+			_backgroundQueue.QueueTask(async () => 
             {
                 //start the task on UI thread.
                 var asyncTask = TTasks.Task.Factory.StartNew(() =>
                 {
-                   return AuditSolutionPackagesInternal();
+					return AuditSolutionPackagesInternal();
                 }, CancellationToken.None, TTasks.TaskCreationOptions.None, _uiTaskScheduler);
 
                 while (!await asyncTask)
@@ -121,34 +128,46 @@ namespace NugetAuditor.VSIX
             });
         }
 
-        private void InstallerEvents_PackageReferenceAdded(IVsPackageMetadata metadata)
-        {
-            _backgroundQueue.QueueTask(async () =>
-            {
-                var asyncTask = TTasks.Task.Factory.StartNew(() =>
-                {
-                    return AuditPackageInternal(metadata);
-                }, CancellationToken.None, TTasks.TaskCreationOptions.None, _uiTaskScheduler);
+		private void InstallerEvents_PackageInstalled(IVsPackageMetadata metadata)
+		{
+			_backgroundQueue.QueueTask(async () => {
+				var asyncTask = TTasks.Task.Factory.StartNew(() => {
+					return AuditPackageInternal(metadata);
+				}, CancellationToken.None, TTasks.TaskCreationOptions.None, _uiTaskScheduler);
 
-                while (!await asyncTask)
-                {
-                    TTasks.Task.Delay(TimeSpan.FromSeconds(5)).Wait();
-                }
-            });
+				while (!await asyncTask)
+				{
+					TTasks.Task.Delay(TimeSpan.FromSeconds(5)).Wait();
+				}
+			});
+		}
+
+		private void InstallerEvents_PackageUninstalled(IVsPackageMetadata metadata)
+		{
+			_refreshTimer.Change(_refreshTimeout, Timeout.Infinite);
+		}
+
+		private void InstallerEvents_PackageReferenceAdded(IVsPackageMetadata metadata)
+        {
+			_refreshTimer.Change(_refreshTimeout, Timeout.Infinite);
         }
 
         private void InstallerEvents_PackageReferenceRemoved(IVsPackageMetadata metadata)
         {
-            _backgroundQueue.QueueTask(() => {
-                RefreshTasks();
-            }, _uiTaskScheduler);
+			_refreshTimer.Change(_refreshTimeout, Timeout.Infinite);
         }
+
+		private void RefreshTimer(object state) {
+			_backgroundQueue.QueueTask(() => {
+				RefreshTasks();
+			}, _uiTaskScheduler);
+		}
 
         private void RefreshTasks()
         {
             VSPackage.AssertOnMainThread();
 
-            var supportedProjects = _dte.Solution.GetSupportedProjects();
+            var supportedProjects = _dte.Solution.GetSupportedProjects().ToList();
 
             _taskProvider.SuspendRefresh();
 
@@ -168,7 +187,7 @@ namespace NugetAuditor.VSIX
             }
         }
 
-        private void OnDocumentClosing(Document document)
+		private void OnDocumentClosing(Document document)
         {
             if (document != null)
             {
@@ -277,7 +296,11 @@ namespace NugetAuditor.VSIX
             {
                 string url;
 
-                if (task.Vulnerability.References.Any())
+				if (!string.IsNullOrEmpty(task.Vulnerability.Id))
+				{
+					url = string.Format("https://ossindex.net/resource/vulnerability/{0}", task.Vulnerability.Id);
+				}
+                else if (task.Vulnerability.References.Any())
                 {
                     url = task.Vulnerability.References.First();
                 }
@@ -348,12 +371,12 @@ namespace NugetAuditor.VSIX
                     _auditResults[auditResult.PackageId] = auditResult;
                 }
 
-                //refresh tasks
-                RefreshTasks();
+				//refresh tasks
+				RefreshTasks();
 
                 if (vulnerableCount > 0)
                 {
-                    _taskProvider.BringToFront();
+					_taskProvider.BringToFront();
                 }
             }
         }
@@ -399,16 +422,16 @@ namespace NugetAuditor.VSIX
             return AuditPackagesInternal(packages);
         }
 
-        private bool AuditPackageInternal(IVsPackageMetadata package)
-        {
-            var packageId = new PackageId(package.Id, package.VersionString);
+		private bool AuditPackageInternal(IVsPackageMetadata package)
+		{
+			var packageId = new PackageId(package.Id, package.VersionString);
 
-            WriteLine(Resources.AuditingPackage, packageId);
+			WriteLine(Resources.AuditingPackage, packageId);
 
-            return AuditPackagesInternal(new[] { packageId });
-        }
+			return AuditPackagesInternal(new[] { packageId });
+		}
 
-        private bool AuditPackagesInternal(IEnumerable<IVsPackageMetadata> packages)
+		private bool AuditPackagesInternal(IEnumerable<IVsPackageMetadata> packages)
         {
             var packageIds = packages.Select(x => new PackageId(x.Id, x.VersionString));
 
@@ -430,67 +453,55 @@ namespace NugetAuditor.VSIX
             return started;
         }
 
-        private bool RunAudit(IEnumerable<PackageId> packageIds, EventHandler<AuditCompletedEventArgs> completedHandler)
-        {
-            if (!packageIds.Any())
-            {
-                if (completedHandler != null)
-                {
-                    var eventArgs = new AuditCompletedEventArgs(Enumerable.Empty<AuditResult>(), null);
+		private bool RunAudit(IEnumerable<PackageId> packageIds, EventHandler<AuditCompletedEventArgs> completedHandler)
+		{
+			if (!packageIds.Any())
+			{
+				completedHandler?.Invoke(null, new AuditCompletedEventArgs(Enumerable.Empty<AuditResult>(), null));
+				return true;
+			}
 
-                    completedHandler(null, eventArgs);
-                }
-                return true;
-            }
+			if (IsAuditRunning)
+			{
+				return false;
+			}
 
-            if (IsAuditRunning)
-            {
-                return false;
-            }
+			_auditRunning = true;
 
-            _auditRunning = true;
+			// Now we will queue a delegate that will be run on a worker thread.
+			ThreadPool.QueueUserWorkItem(state => {
+				// !! WORKER THREAD CONTEXT !!
+				Exception exception = null;
+				IEnumerable<AuditResult> results = null;
 
-            // Now we will queue a delegate that will be run on a worker thread.
-            ThreadPool.QueueUserWorkItem(
-                delegate
-                {
-                    // !! WORKER THREAD CONTEXT !!
-                    Exception exception = null;
-                    IEnumerable<AuditResult> results = null;
+				try
+				{
+					results = Lib.NugetAuditor.AuditPackages(packageIds, VSPackage.Instance.Option_CacheSync);
+				}
+				catch (Exception ex)
+				{
+					// Just record the exception, we will handle it later.
+					exception = ex;
+				}
 
-                    try
-                    {
-                        results = Lib.NugetAuditor.AuditPackages(packageIds, VSPackage.Instance.Option_CacheSync);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Just record the exception, we will handle it later.
-                        exception = ex;
-                    }
+				// Here we are still in the worker thread context. The completion event must be executed in
+				// the same thread context as caller of RunAsync(). To change the thread context we use the
+				// stored synchronization context.
+				VSPackage.Instance.UICtx.Send((x) => {
+					// !! MAIN THREAD CONTEXT !!
+					// Back to main thread. From here we can safely update our internal state and invoke the
+					// completion event.
 
-                    // Here we are still in the worker thread context. The completion event must be executed in
-                    // the same thread context as caller of RunAsync(). To change the thread context we use the
-                    // stored synchronization context.
-                    VSPackage.Instance.UICtx.Send((x) =>
-                    {
-                        // !! MAIN THREAD CONTEXT !!
-                        // Back to main thread. From here we can safely update our internal state and invoke the
-                        // completion event.
+					// Reset process and running flag.
+					_auditRunning = false;
 
-                        // Reset process and running flag.
-                        _auditRunning = false;
+					// notify event subscribers (if any).
+					completedHandler?.Invoke(null, new AuditCompletedEventArgs(results, exception));
+				}, null);
+			});
 
-                        // notify event subscribers (if any).
-                        if (completedHandler != null)
-                        {
-                            var eventArgs = new AuditCompletedEventArgs(results, exception);
-                            completedHandler(null, eventArgs);
-                        }
-                    }, null);
-                });
-
-            return true;
-        }
+			return true;
+		}
 
         #region Output Window
 
@@ -539,16 +550,16 @@ namespace NugetAuditor.VSIX
             {
                 if (disposing)
                 {
-                    if (_markerProvider != null)
-                    {
-                        _markerProvider.Dispose();
-                    }
+					_refreshTimer?.Dispose();
+                    _markerProvider?.Dispose();
 
                     if (_packageInstallerEvents != null)
                     {
                         _packageInstallerEvents.PackageReferenceAdded -= InstallerEvents_PackageReferenceAdded;
                         _packageInstallerEvents.PackageReferenceRemoved -= InstallerEvents_PackageReferenceRemoved;
-                    }
+						_packageInstallerEvents.PackageInstalled -= InstallerEvents_PackageInstalled;
+						_packageInstallerEvents.PackageUninstalled -= InstallerEvents_PackageUninstalled;
+					}
 
                     if (_documentEvents != null)
                     {
@@ -562,15 +573,8 @@ namespace NugetAuditor.VSIX
                         _selectionEvents.Dispose();
                     }
 
-                    if (_taskProvider != null)
-                    {
-                        _taskProvider.Dispose();
-                    }
-
-                    if (_backgroundQueue != null)
-                    {
-                        _backgroundQueue.Dispose();
-                    }
+                    _taskProvider?.Dispose();
+                    _backgroundQueue?.Dispose();
 
                     _auditResults.Clear();
                 }

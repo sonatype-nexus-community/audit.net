@@ -71,6 +71,7 @@
     <Compile Include="OptionPageGrid.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="VsConstants.cs" />
     <Compile Include="VsUtility.cs" />
     <Compile Include="AuditCompletedEventArgs.cs" />
     <Compile Include="EventSinks\SelectionEvents.cs" />
