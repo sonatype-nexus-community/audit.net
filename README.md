@@ -52,12 +52,13 @@ Audit.NET installation has been tested on Microsoft Visual Studio Community 2015
 ### Viewing Errors ###
 
 1. Click the "Error List" tab
-2. Audit.NET vulnerabilities will appear in the list with one of two icons:
-    1. A red "X" indicates an active vulnerability in the installed package
-    2. A blue "i" indicates a past vulnerability that is not expected to affect the installed package
+2. Audit.NET vulnerabilities will appear in the list with the red "X" icon
 3. Double click on an error to open the package.config file with the vulnerable package
 4. The vulnerable package will be underlined in red
 5. Resolve the problem either by using the NuGet package manager, or by hand editing the packages.config
 6. If you hand edit the packages.config file you will have to run Audit.NET manually to clear the error
 
+### Viewing More Error Details ###
+1. Right click on an error in the errors tab
+2. Select "Show Error Help" and the OSS Index page for the selected error will be displayed. This page has additional information such as a list of reference links that can provide evidence of the existence and severity of the vulnerability, as well as possibly insight into the causes, and in some cases possible mitigations.
 
