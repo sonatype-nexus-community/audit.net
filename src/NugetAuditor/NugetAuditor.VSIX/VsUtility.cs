@@ -162,19 +162,26 @@ namespace NugetAuditor.VSIX
             // TODO: Find a better way to detect support for NuGet packages.
             try
             {
-                ServiceLocator.GetInstance<IVsPackageInstallerServices>().IsPackageInstalled(project, "__dummy__");
+                // FIXME: This should not happen
+                if (project == null) return false;
+                IVsPackageInstallerServices locator = ServiceLocator.GetInstance<IVsPackageInstallerServices>();
+                // FIXME: This should not happen
+                if (locator == null) return false;
+                locator.IsPackageInstalled(project, "__dummy__");
                 return true;
             }
 			catch (InvalidOperationException)
             {
                 return false;
             }
-			catch (Exception e)
-			{
+            catch (Exception e)
+            {
 				ExceptionHelper.WriteToActivityLog(e);
-				return false;
-			}
-		}
+                // FIXME: A variety of project types which do not work with the IsPackageInstalled method will throw exceptions of various sorts.
+                // FIXME: Surely there is a better way to check for Nuget support?
+                return false;
+            }
+        }
 
         internal static bool IsProjectUnloaded(this Project project)
         {

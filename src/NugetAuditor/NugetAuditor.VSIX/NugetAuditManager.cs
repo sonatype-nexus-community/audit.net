@@ -267,7 +267,7 @@ namespace NugetAuditor.VSIX
                             {
                                 Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
                                 ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
-                                Text = string.Format("{0}: {1}\n{2}", packageReference.PackageId, vulnerability.Title, vulnerability.Description),
+                                Text = string.Format("{0}: {1}\nReference: https://ossindex.net/resource/vulnerability/{2}\n{3}", packageReference.PackageId, vulnerability.Title, vulnerability.Id, vulnerability.Description),
                                 HierarchyItem = projectHierarchy,
                                 Category = TaskCategory.Misc,
                                 Document = packageReference.File,
@@ -296,23 +296,16 @@ namespace NugetAuditor.VSIX
             {
                 string url;
 
-				if (!string.IsNullOrEmpty(task.Vulnerability.Id))
-				{
-					url = string.Format("https://ossindex.net/resource/vulnerability/{0}", task.Vulnerability.Id);
-				}
-                else if (task.Vulnerability.References.Any())
+                string cve = task.Vulnerability.CVE;
+                if (cve != null)
                 {
-                    url = task.Vulnerability.References.First();
-                }
-                else if (!string.IsNullOrEmpty(task.Vulnerability.CVE))
-                {
-                    url = string.Format("http://cve.mitre.org/cgi-bin/cvename.cgi?name={0}", task.Vulnerability.CVE);
+                    url = string.Format("https://ossindex.net/resource/cve/{0}", task.Vulnerability.Id);
                 }
                 else
                 {
-                    return;
+                    url = string.Format("https://ossindex.net/resource/vulnerability/{0}", task.Vulnerability.Id);
                 }
-
+                
                 VsShellUtilities.OpenBrowser(url);
             }
         }
