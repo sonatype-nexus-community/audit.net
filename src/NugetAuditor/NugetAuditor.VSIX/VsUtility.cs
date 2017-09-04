@@ -154,9 +154,10 @@ namespace NugetAuditor.VSIX
             {
                 return false;
             }
-            catch (NullReferenceException)
+            catch (Exception)
             {
-                // FIXME: This is a terrible kludge
+                // FIXME: A variety of project types which do not work with the IsPackageInstalled method will throw exceptions of various sorts.
+                // FIXME: Surely there is a better way to check for Nuget support?
                 return false;
             }
         }
