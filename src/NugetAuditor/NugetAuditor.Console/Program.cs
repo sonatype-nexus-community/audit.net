@@ -108,7 +108,7 @@ namespace NugetAuditor.ConsoleApp
                                 }
 
                                 Console.ForegroundColor = ConsoleColor.Yellow;
-                                Console.WriteLine("{0} known vulnerabilities, {1} affecting installed version", auditResult.TotalVulnerabilites, auditResult.MatchedVulnerabilities);
+                                Console.WriteLine("{0} vulnerabilities affecting installed version", auditResult.MatchedVulnerabilities);
                                 Console.ResetColor();
 
                                 foreach (var item in auditResult.Vulnerabilities)

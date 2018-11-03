@@ -294,18 +294,7 @@ namespace NugetAuditor.VSIX
 
             if (task != null)
             {
-                string url;
-
-                string cve = task.Vulnerability.CVE;
-                if (cve != null)
-                {
-                    url = string.Format("https://ossindex.sonatype.org/resource/cve/{0}", task.Vulnerability.Id);
-                }
-                else
-                {
-                    url = string.Format("https://ossindex.sonatype.org/resource/vulnerability/{0}", task.Vulnerability.Id);
-                }
-                
+                string url = string.Format("https://ossindex.sonatype.org/vuln/{0}", task.Vulnerability.Id);
                 VsShellUtilities.OpenBrowser(url);
             }
         }

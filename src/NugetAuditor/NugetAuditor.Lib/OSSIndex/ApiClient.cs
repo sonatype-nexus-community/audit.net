@@ -64,15 +64,6 @@ namespace NugetAuditor.Lib.OSSIndex
                 var request = new RestRequest(Method.POST);
 
                 ComponentReport report = new ComponentReport();
-                // IEnumerable<PackageURL> purls = coords.Take(this._pageSize);
-                // List<string> useCoords = new List<string>();
-
-                // foreach (PackageURL purl in purls)
-                // {
-                //     useCoords.Add(purl.ToString());
-                // }
-
-                // report.coordinates = useCoords;
                 report.coordinates = coords.Select(x => x.ToString());
 
                 request.Resource = "component-report";
