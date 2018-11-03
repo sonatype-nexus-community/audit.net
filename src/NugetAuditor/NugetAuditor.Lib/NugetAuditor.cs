@@ -23,9 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#define BATCH
-
 using NugetAuditor.Lib.OSSIndex;
+using PackageUrl;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,28 +58,15 @@ namespace NugetAuditor.Lib
             var cachePolicy = CachePolicy(cacheSync);
             var client = new OSSIndex.ApiClient(cachePolicy) as Lib.OSSIndex.IApiClient;
 
-#if (BATCH)
-            var packageSearches = packageIds.Select(x => new NugetPackageSearch() { name = x.Id, version = x.VersionString });
+            // NugetPackageSearch(x.Id, version = x.VersionString)
+            var packageSearches = packageIds.Select(x => (new PackageURL("nuget", null, x.Id, x.VersionString, null, null)));
             var packages = client.SearchPackages(packageSearches);
-#endif
+
             foreach (var packageId in packageIds)
             {
                 Lib.OSSIndex.Package package = null;
-#if (!BATCH)
-                try
-                {
-                    var search = new NugetPackageSearch() { name = packageId.Id, version = packageId.VersionString };
-                    var packages = client.SearchPackage(search);
-#endif
-					//find first 
-					package = packages.FirstOrDefault(x => x.Name == packageId.Id);
-#if (!BATCH)
-                }
-                catch (ApiClientException e)
-                {
-                    System.Diagnostics.Trace.TraceError("ApiClient call failed. \n{0}", e.ToString());
-                }
-#endif
+				//find first 
+				package = packages.FirstOrDefault(x => x.Name == packageId.Id);
                 yield return new AuditResult(packageId, package);
             }
         }

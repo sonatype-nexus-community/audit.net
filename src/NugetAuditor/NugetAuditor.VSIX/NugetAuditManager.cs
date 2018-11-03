@@ -250,7 +250,7 @@ namespace NugetAuditor.VSIX
                     }
 
                     if (auditResult == null
-                        || auditResult.Status == AuditStatus.NoKnownVulnerabilities
+                        || auditResult.Status == AuditStatus.NoActiveVulnerabilities
                         || auditResult.Status == AuditStatus.UnknownPackage
                         || auditResult.Status == AuditStatus.UnknownSource)
                     {

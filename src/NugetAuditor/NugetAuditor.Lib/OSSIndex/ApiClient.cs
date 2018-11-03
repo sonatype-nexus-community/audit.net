@@ -23,6 +23,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using PackageUrl;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -54,7 +55,7 @@ namespace NugetAuditor.Lib.OSSIndex
             }
         }
 
-        public IList<Package> SearchPackages(IEnumerable<string> coords)
+        public IList<Package> SearchPackages(IEnumerable<PackageURL> coords)
         {
             var result = new List<Package>(coords.Count());
 
@@ -63,7 +64,16 @@ namespace NugetAuditor.Lib.OSSIndex
                 var request = new RestRequest(Method.POST);
 
                 ComponentReport report = new ComponentReport();
-                report.coordinates = coords.Take(this._pageSize);
+                // IEnumerable<PackageURL> purls = coords.Take(this._pageSize);
+                // List<string> useCoords = new List<string>();
+
+                // foreach (PackageURL purl in purls)
+                // {
+                //     useCoords.Add(purl.ToString());
+                // }
+
+                // report.coordinates = useCoords;
+                report.coordinates = coords.Select(x => x.ToString());
 
                 request.Resource = "component-report";
                 request.RequestFormat = DataFormat.Json;

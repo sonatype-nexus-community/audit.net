@@ -23,12 +23,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using PackageUrl;
 using System.Collections.Generic;
 
 namespace NugetAuditor.Lib.OSSIndex
 {
     internal interface IApiClient
     {
-        IList<Package> SearchPackages(IEnumerable<string> coordinates);
+        IList<Package> SearchPackages(IEnumerable<PackageURL> coordinates);
     }
 }

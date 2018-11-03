@@ -33,7 +33,7 @@ namespace NugetAuditor.Lib
 {
     public enum AuditStatus
     {
-        NoKnownVulnerabilities = 0,
+        NoActiveVulnerabilities = 0,
         HasVulnerabilities,
         //Vulnerable,
         UnknownSource,

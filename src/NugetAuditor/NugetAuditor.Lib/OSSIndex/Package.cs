@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PackageUrl;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,5 +13,14 @@ namespace NugetAuditor.Lib.OSSIndex
         public string Description { get; set; }
         public string Reference { get; set; }
         public List<Vulnerability> Vulnerabilities { get; set; }
+
+        public string Name
+        {
+            get
+            {
+                PackageURL purl = new PackageURL(Coordinates);
+                return purl.Name;
+            }
+        }
 	}
 }

@@ -90,7 +90,7 @@ namespace NugetAuditor.ConsoleApp
                                 Console.ResetColor();
                                 break;
                             }
-                        case Lib.AuditStatus.NoKnownVulnerabilities:
+                        case Lib.AuditStatus.NoActiveVulnerabilities:
                             {
                                 Console.ForegroundColor = ConsoleColor.Green;
                                 Console.WriteLine("No known vulnerabilities");

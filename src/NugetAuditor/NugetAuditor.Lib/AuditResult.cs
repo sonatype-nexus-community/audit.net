@@ -45,18 +45,11 @@ namespace NugetAuditor.Lib
             }
         }
 
-		public int TotalVulnerabilites
-		{
-			get {
-				return this._package.VulnerabilityTotal;
-			}
-		}
-
 		public int MatchedVulnerabilities
 		{
 			get
 			{
-				return this._package.VulnerabilityMatches;
+                return this._package.Vulnerabilities.Count;
 			}
 		}
 
@@ -76,9 +69,9 @@ namespace NugetAuditor.Lib
                 {
                     return AuditStatus.UnknownPackage;
                 }
-                else if (this._package.VulnerabilityTotal == 0)
+                else if (this._package.Vulnerabilities.Count == 0)
                 {
-                    return AuditStatus.NoKnownVulnerabilities;
+                    return AuditStatus.NoActiveVulnerabilities;
                 }
                 else
                 {
