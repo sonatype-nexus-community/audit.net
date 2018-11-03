@@ -267,7 +267,7 @@ namespace NugetAuditor.VSIX
                             {
                                 Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
                                 ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
-                                Text = string.Format("{0}: {1}\nReference: https://ossindex.net/resource/vulnerability/{2}\n{3}", packageReference.PackageId, vulnerability.Title, vulnerability.Id, vulnerability.Description),
+                                Text = string.Format("{0}: {1}\nReference: https://ossindex.sonatype.org/resource/vulnerability/{2}\n{3}", packageReference.PackageId, vulnerability.Title, vulnerability.Id, vulnerability.Description),
                                 HierarchyItem = projectHierarchy,
                                 Category = TaskCategory.Misc,
                                 Document = packageReference.File,
@@ -299,11 +299,11 @@ namespace NugetAuditor.VSIX
                 string cve = task.Vulnerability.CVE;
                 if (cve != null)
                 {
-                    url = string.Format("https://ossindex.net/resource/cve/{0}", task.Vulnerability.Id);
+                    url = string.Format("https://ossindex.sonatype.org/resource/cve/{0}", task.Vulnerability.Id);
                 }
                 else
                 {
-                    url = string.Format("https://ossindex.net/resource/vulnerability/{0}", task.Vulnerability.Id);
+                    url = string.Format("https://ossindex.sonatype.org/resource/vulnerability/{0}", task.Vulnerability.Id);
                 }
                 
                 VsShellUtilities.OpenBrowser(url);

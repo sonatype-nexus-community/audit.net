@@ -43,7 +43,7 @@ namespace NugetAuditor.Lib.OSSIndex
         { }
 
         public ApiClient(HttpRequestCachePolicy cachePolicy)
-            : base("https://ossindex.net/v2.0", cachePolicy)
+            : base("https://ossindex.sonatype.org/v2.0", cachePolicy)
         { }
 
         private void BeforeSerialization(IRestResponse response)
