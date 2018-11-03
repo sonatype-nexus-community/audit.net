@@ -29,8 +29,6 @@ namespace NugetAuditor.Lib.OSSIndex
 {
     internal interface IApiClient
     {
-        IList<Package> SearchPackages(IEnumerable<PackageSearch> searches);
-        IList<Package> SearchPackage(PackageSearch search);
-        IList<Package> SearchPackage(string pm, string name, string version);
+        IList<Package> SearchPackages(IEnumerable<string> coordinates);
     }
 }

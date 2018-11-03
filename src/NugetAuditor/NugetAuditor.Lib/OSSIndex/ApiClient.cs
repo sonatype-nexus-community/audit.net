@@ -43,7 +43,7 @@ namespace NugetAuditor.Lib.OSSIndex
         { }
 
         public ApiClient(HttpRequestCachePolicy cachePolicy)
-            : base("https://ossindex.sonatype.org/v2.0", cachePolicy)
+            : base("https://ossindex.sonatype.org/api/v3", cachePolicy)
         { }
 
         private void BeforeSerialization(IRestResponse response)
@@ -54,18 +54,21 @@ namespace NugetAuditor.Lib.OSSIndex
             }
         }
 
-        public IList<Package> SearchPackages(IEnumerable<PackageSearch> searches)
+        public IList<Package> SearchPackages(IEnumerable<string> coords)
         {
-            var result = new List<Package>(searches.Count());
+            var result = new List<Package>(coords.Count());
 
-            while (searches.Any())
+            while (coords.Any())
             {
                 var request = new RestRequest(Method.POST);
 
-                request.Resource = "package";
+                ComponentReport report = new ComponentReport();
+                report.coordinates = coords.Take(this._pageSize);
+
+                request.Resource = "component-report";
                 request.RequestFormat = DataFormat.Json;
                 request.OnBeforeDeserialization = BeforeSerialization;
-                request.AddBody(searches.Take(this._pageSize));
+                request.AddBody(report);
 
                 var response = Execute<PackageResponse>(request);
 
@@ -76,37 +79,10 @@ namespace NugetAuditor.Lib.OSSIndex
 
                 result.AddRange(response.Data);
 
-                searches = searches.Skip(this._pageSize);
+                coords = coords.Skip(this._pageSize);
             }
 
             return result;
-        }
-
-        public IList<Package> SearchPackage(PackageSearch search)
-        {
-            return SearchPackage(search.pm, search.name, search.version);
-        }
-
-        public IList<Package> SearchPackage(string pm, string name, string version)
-        {
-            var request = new RestRequest(Method.GET);
-
-            request.Resource = "package/{pm}/{name}/{version}";
-            request.RequestFormat = DataFormat.Json;
-            request.OnBeforeDeserialization = BeforeSerialization;
-
-            request.AddParameter("pm", pm, ParameterType.UrlSegment);
-            request.AddParameter("name", name, ParameterType.UrlSegment);
-            request.AddParameter("version", version, ParameterType.UrlSegment);
-
-            var response = Execute<PackageResponse>(request);
-
-            if (response.ResponseStatus == ResponseStatus.Error)
-            {
-                throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
-            }
-
-            return response.Data;
         }
     }
 }
