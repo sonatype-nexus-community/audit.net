@@ -43,6 +43,9 @@
     <AssemblyOriginatorKeyFile>..\NugetAuditor.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FileCache.Signed, Version=2.1.4.0, Culture=neutral, PublicKeyToken=7542c4e7f6a4d381, processorArchitecture=MSIL">
+      <HintPath>..\packages\FileCache.Signed.2.1.4\lib\net45\FileCache.Signed.dll</HintPath>
+    </Reference>
     <Reference Include="NuGet.Versioning, Version=3.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\NuGet.Versioning.3.3.0\lib\net45\NuGet.Versioning.dll</HintPath>
       <Private>True</Private>

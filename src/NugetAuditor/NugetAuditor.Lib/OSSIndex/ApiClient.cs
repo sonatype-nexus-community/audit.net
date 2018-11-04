@@ -27,9 +27,12 @@ using PackageUrl;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Cache;
+using System.Reflection;
+using System.Runtime.Caching;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -39,13 +42,29 @@ namespace NugetAuditor.Lib.OSSIndex
     {
         private int _pageSize = 100;
 
+        private FileCache cache = null;
+
+        private long cacheExpiration { get; set; } = 43200; // Seconds in 12 hours
+
         public ApiClient()
             : this(new HttpRequestCachePolicy(HttpRequestCacheLevel.Default))
-        { }
+        {
+            initCache();
+        }
 
         public ApiClient(HttpRequestCachePolicy cachePolicy)
             : base("https://ossindex.sonatype.org/api/v3", cachePolicy)
-        { }
+        {
+            initCache();
+        }
+
+        private void initCache()
+        {
+            // Get an appropriate place for the cache and initialize it
+            var directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string path = Path.Combine(directory, "OSSIndex", "cache");
+            cache = new FileCache(path, new ObjectBinder());
+        }
 
         private void BeforeSerialization(IRestResponse response)
         {
@@ -55,16 +74,42 @@ namespace NugetAuditor.Lib.OSSIndex
             }
         }
 
-        public IList<Package> SearchPackages(IEnumerable<PackageURL> coords)
+        public IList<Package> SearchPackages(IEnumerable<PackageURL> inCoords)
         {
-            var result = new List<Package>(coords.Count());
+            var result = new List<Package>(inCoords.Count());
 
-            while (coords.Any())
+            List<PackageURL> useCoords = new List<PackageURL>();
+
+            foreach (PackageURL purl in inCoords)
+            {
+                Package cachedPkg = (Package)cache[purl.ToString()];
+                if (cachedPkg != null)
+                {
+                    long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+                    long diff = now - cachedPkg.CachedAt;
+                    if (diff < cacheExpiration)
+                    {
+                        result.Add(cachedPkg);
+                    }
+                    else
+                    {
+                        useCoords.Add(purl);
+                    }
+                }
+                else
+                {
+                    useCoords.Add(purl);
+                }
+            }
+
+            IEnumerable<PackageURL> useEnumerable = useCoords;
+
+            while (useEnumerable.Any())
             {
                 var request = new RestRequest(Method.POST);
 
                 ComponentReport report = new ComponentReport();
-                report.coordinates = coords.Select(x => x.ToString());
+                report.coordinates = useEnumerable.Select(x => x.ToString());
 
                 request.Resource = "component-report";
                 request.RequestFormat = DataFormat.Json;
@@ -78,12 +123,36 @@ namespace NugetAuditor.Lib.OSSIndex
                     throw new ApiClientTransportException(response.ErrorMessage, response.ErrorException);
                 }
 
-                result.AddRange(response.Data);
+                foreach (Package pkg in response.Data)
+                {
+                    pkg.CachedAt = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+                    cache[pkg.Coordinates] = pkg;
+                    result.Add(pkg);
+                }
 
-                coords = coords.Skip(this._pageSize);
+                useEnumerable = useEnumerable.Skip(this._pageSize);
             }
 
             return result;
+        }
+    }
+    /** https://github.com/acarteas/FileCache
+     */
+    public sealed class ObjectBinder : System.Runtime.Serialization.SerializationBinder
+    {
+        public override Type BindToType(string assemblyName, string typeName)
+        {
+            Type typeToDeserialize = null;
+            String currentAssembly = Assembly.GetExecutingAssembly().FullName;
+
+            // In this case we are always using the current assembly
+            assemblyName = currentAssembly;
+
+            // Get the type using the typeName and assemblyName
+            typeToDeserialize = Type.GetType(String.Format("{0}, {1}",
+            typeName, assemblyName));
+
+            return typeToDeserialize;
         }
     }
 }

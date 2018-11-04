@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 
 namespace NugetAuditor.Lib.OSSIndex
 {
-	public class Package
+    [Serializable]
+    public class Package
 	{
 		public string Coordinates { get; set; }
         public string Description { get; set; }
         public string Reference { get; set; }
         public List<Vulnerability> Vulnerabilities { get; set; }
+        public long CachedAt { get; set; }
 
         public string Name
         {
