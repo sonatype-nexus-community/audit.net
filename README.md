@@ -8,7 +8,7 @@ Audit.NET scans your dependencies on project load, when new dependencies are add
 
 ## Installation ##
 
-Audit.NET installation has been tested on Microsoft Visual Studio Community 2015, though it will likely install on earlier versions of Visual Studio Professional.
+Audit.NET installation has been tested on Microsoft Visual Studio Community 2017, though it will likely install on earlier versions of Visual Studio Professional.
 
 1. Start Visual Studio
 2. Select the "Tools->Extensions and Updates..." menu item
