@@ -1,3 +1,6 @@
+
+**Note**: The 3.x release uses the new 3.x OSS Index database, which has some rate limiting. If you notice you are hitting the limit please raise an issue. Authenticated users get a higher limit, and we am implementing authentication into Audit.NET soon. Most non-authenticated users probably won't notice the limit for many use cases. It usually kicks in only in much larger projects or higher project volumes.
+
 # Audit.NET #
 
 Audit.NET is a Visual Studio extension that highlights NuGet package dependencies with security vulnerabilities.
