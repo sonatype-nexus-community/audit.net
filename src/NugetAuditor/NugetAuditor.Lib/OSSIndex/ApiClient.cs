@@ -23,6 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using Newtonsoft.Json;
+using NuGet.Common;
 using PackageUrl;
 using RestSharp;
 using System;
@@ -40,22 +42,21 @@ namespace NugetAuditor.Lib.OSSIndex
 {
     internal class ApiClient : ApiClientBase, IApiClient
     {
+        private static bool DEBUG = true;
+
         private int _pageSize = 100;
 
         private FileCache cache = null;
 
         private long cacheExpiration { get; set; } = 43200; // Seconds in 12 hours
 
-        public ApiClient()
-            : this(new HttpRequestCachePolicy(HttpRequestCacheLevel.Default))
-        {
-            initCache();
-        }
+        private ILogger logger;
 
-        public ApiClient(HttpRequestCachePolicy cachePolicy)
+        public ApiClient(HttpRequestCachePolicy cachePolicy, ILogger logger)
             : base("https://ossindex.sonatype.org/api/v3", cachePolicy)
         {
             initCache();
+            this.logger = logger;
         }
 
         private void initCache()
@@ -115,6 +116,18 @@ namespace NugetAuditor.Lib.OSSIndex
                 request.RequestFormat = DataFormat.Json;
                 request.OnBeforeDeserialization = BeforeSerialization;
                 request.AddBody(report);
+
+                if (DEBUG)
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    using (StringWriter sw = new StringWriter())
+                    using (JsonWriter writer = new JsonTextWriter(sw))
+                    {
+                        serializer.Serialize(writer, report);
+                        logger.LogDebug("Body:");
+                        logger.LogDebug(sw.ToString());
+                    }
+                }
 
                 var response = Execute<PackageResponse>(request);
 
