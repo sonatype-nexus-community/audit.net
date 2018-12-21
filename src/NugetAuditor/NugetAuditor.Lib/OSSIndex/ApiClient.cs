@@ -81,15 +81,12 @@ namespace NugetAuditor.Lib.OSSIndex
 
             foreach (PackageURL purl in inCoords)
             {
-                logger.LogDebug("Check cache for " + purl.ToString());
                 if (cache.Contains(purl.ToString()))
                 {
-                    logger.LogDebug("Get cached for " + purl.ToString());
-                    Package cachedPkg = (Package)cache[purl.ToString()];
-                    logger.LogDebug("Got cached: " + cachedPkg);
+                    string json = (string)cache[purl.ToString()];
+                    Package cachedPkg = JsonConvert.DeserializeObject<Package>(json);
 
                     long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
-                    logger.LogDebug("CachedAt: " + cachedPkg.CachedAt);
                     long diff = now - cachedPkg.CachedAt;
                     if (diff < cacheExpiration)
                     {
@@ -97,7 +94,6 @@ namespace NugetAuditor.Lib.OSSIndex
                     }
                     else
                     {
-                        logger.LogDebug("Remove cache for " + purl.ToString());
                         cache.Remove(purl.ToString());
                         useCoords.Add(purl);
                     }
@@ -115,6 +111,8 @@ namespace NugetAuditor.Lib.OSSIndex
             foreach (List<PackageURL> batch in batches)
             {
                 var request = new RestRequest(Method.POST);
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.NullValueHandling = NullValueHandling.Ignore;
 
                 ComponentReport report = new ComponentReport();
                 report.coordinates = batch.Select(x => x.ToString());
@@ -136,8 +134,12 @@ namespace NugetAuditor.Lib.OSSIndex
                 foreach (Package pkg in response.Data)
                 {
                     pkg.CachedAt = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
-                    logger.LogDebug("Add cache for " + pkg.Coordinates);
-                    cache[pkg.Coordinates] = pkg;
+                    using (StringWriter sw = new StringWriter())
+                    using (JsonWriter writer = new JsonTextWriter(sw))
+                    {
+                        serializer.Serialize(writer, pkg);
+                        cache[pkg.Coordinates] = sw.ToString();
+                    }
                     result.Add(pkg);
                 }
             }
