@@ -339,6 +339,12 @@ namespace NugetAuditor.VSIX
             }
             else
             {
+                WriteLine("Packages audited:");
+                foreach (var result in e.Results)
+                {
+                    WriteLine("  * " + result.PackageId.Id + "@" + result.PackageId.VersionString);
+                }
+
                 var vulnerableCount = e.Results.Count(x => x.Status == AuditStatus.HasVulnerabilities);
 
                 if (vulnerableCount > 0)
@@ -348,12 +354,6 @@ namespace NugetAuditor.VSIX
                 else
                 {
                     WriteLine(Resources.NoVulnarebilitiesFound);
-                }
-
-                WriteLine("Packages audited:");
-                foreach (var result in e.Results)
-                {
-                    WriteLine("  * " + result.PackageId.Id + "@" + result.PackageId.VersionString);
                 }
 
                 //update audit results dictionary

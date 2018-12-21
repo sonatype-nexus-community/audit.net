@@ -42,9 +42,7 @@ namespace NugetAuditor.Lib.OSSIndex
 {
     internal class ApiClient : ApiClientBase, IApiClient
     {
-        private static bool DEBUG = true;
-
-        private int _pageSize = 100;
+        private int _pageSize = 128;
 
         private FileCache cache = null;
 
@@ -83,10 +81,15 @@ namespace NugetAuditor.Lib.OSSIndex
 
             foreach (PackageURL purl in inCoords)
             {
-                Package cachedPkg = (Package)cache[purl.ToString()];
-                if (cachedPkg != null)
+                logger.LogDebug("Check cache for " + purl.ToString());
+                if (cache.Contains(purl.ToString()))
                 {
+                    logger.LogDebug("Get cached for " + purl.ToString());
+                    Package cachedPkg = (Package)cache[purl.ToString()];
+                    logger.LogDebug("Got cached: " + cachedPkg);
+
                     long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+                    logger.LogDebug("CachedAt: " + cachedPkg.CachedAt);
                     long diff = now - cachedPkg.CachedAt;
                     if (diff < cacheExpiration)
                     {
@@ -94,6 +97,8 @@ namespace NugetAuditor.Lib.OSSIndex
                     }
                     else
                     {
+                        logger.LogDebug("Remove cache for " + purl.ToString());
+                        cache.Remove(purl.ToString());
                         useCoords.Add(purl);
                     }
                 }
@@ -103,31 +108,23 @@ namespace NugetAuditor.Lib.OSSIndex
                 }
             }
 
-            IEnumerable<PackageURL> useEnumerable = useCoords;
+            IEnumerable<PackageURL> useEnum = useCoords;
 
-            while (useEnumerable.Any())
+            List<List<PackageURL>> batches = Split(useEnum, _pageSize);
+
+            foreach (List<PackageURL> batch in batches)
             {
                 var request = new RestRequest(Method.POST);
 
                 ComponentReport report = new ComponentReport();
-                report.coordinates = useEnumerable.Select(x => x.ToString());
+                report.coordinates = batch.Select(x => x.ToString());
 
                 request.Resource = "component-report";
                 request.RequestFormat = DataFormat.Json;
                 request.OnBeforeDeserialization = BeforeSerialization;
                 request.AddBody(report);
 
-                if (DEBUG)
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    using (StringWriter sw = new StringWriter())
-                    using (JsonWriter writer = new JsonTextWriter(sw))
-                    {
-                        serializer.Serialize(writer, report);
-                        logger.LogDebug("Body:");
-                        logger.LogDebug(sw.ToString());
-                    }
-                }
+                logger.LogDebug("OSS Index request for " + report.coordinates.Count() + " packages...");
 
                 var response = Execute<PackageResponse>(request);
 
@@ -139,16 +136,31 @@ namespace NugetAuditor.Lib.OSSIndex
                 foreach (Package pkg in response.Data)
                 {
                     pkg.CachedAt = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+                    logger.LogDebug("Add cache for " + pkg.Coordinates);
                     cache[pkg.Coordinates] = pkg;
                     result.Add(pkg);
                 }
-
-                useEnumerable = useEnumerable.Skip(this._pageSize);
             }
 
             return result;
         }
+
+        public static List<List<T>> Split<T>(IEnumerable<T> enumerable, int size)
+        {
+            List<T> collection = enumerable.ToList();
+            var chunks = new List<List<T>>();
+            var chunkCount = collection.Count() / size;
+
+            if (collection.Count % size > 0)
+                chunkCount++;
+
+            for (var i = 0; i < chunkCount; i++)
+                chunks.Add(collection.Skip(i * size).Take(size).ToList());
+
+            return chunks;
+        }
     }
+
     /** https://github.com/acarteas/FileCache
      */
     public sealed class ObjectBinder : System.Runtime.Serialization.SerializationBinder

@@ -38,6 +38,7 @@ using NuGet.Protocol;
 using NuGet.Packaging;
 using System.Runtime.Caching;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace NugetAuditor.Lib
 {
@@ -97,6 +98,8 @@ namespace NugetAuditor.Lib
 
         private static IEnumerable<PackageId> getDependencies(IEnumerable<PackageId> packages, ILogger logger)
         {
+            initDepCache();
+
             HashSet<PackageId> visited = new HashSet<PackageId>();
             Queue<PackageId> todo = new Queue<PackageId>(packages);
             logger.LogDebug("Finding dependencies...");
@@ -104,15 +107,23 @@ namespace NugetAuditor.Lib
             {
                 PackageId pkg = todo.Dequeue();
                 string purl = "pkg:nuget/" + pkg.Id + "@" + pkg.Version;
-                logger.LogDebug("  * " + purl);
                 if (!visited.Contains(pkg))
                 {
                     visited.Add(pkg);
-                    IEnumerable<PackageId> deps = (IEnumerable<PackageId>)depCache[purl];
-                    if (deps == null)
+                    HashSet<PackageId> deps = null;
+                    if (depCache.Contains(purl))
                     {
+                        string json = (string)depCache[purl];
+                        deps = JsonConvert.DeserializeObject<HashSet<PackageId>>(json);
+                    }
+                    else
+                    {
+                        logger.LogDebug("  Fetch dependencies for " + purl);
                         deps = getDependencies(pkg);
-                        depCache[purl] = deps;
+                        if (deps != null)
+                        {
+                            depCache[purl] = deps.ToJson();
+                        }
                     }
                     foreach (PackageId dep in deps)
                     {
@@ -120,10 +131,11 @@ namespace NugetAuditor.Lib
                     }
                 }
             }
+            logger.LogDebug("  done.");
             return visited;
         }
 
-        private static IEnumerable<PackageId> getDependencies(PackageId pkg)
+        private static HashSet<PackageId> getDependencies(PackageId pkg)
         {
             HashSet<PackageId> results = new HashSet<PackageId>();
 
