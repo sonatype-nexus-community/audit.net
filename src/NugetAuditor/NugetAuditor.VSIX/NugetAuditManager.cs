@@ -389,11 +389,24 @@ namespace NugetAuditor.VSIX
         private bool AuditSolutionPackagesInternal()
         {
             VSPackage.AssertOnMainThread();
-
-            var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages();
+            IEnumerable<IVsPackageMetadata> packages = null;
+            try
+            {
+                packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages();
+            }
+            catch (InvalidOperationException ioe)
+            {
+                if (ioe.Source == "NuGet.PackageManagement.VisualStudio")
+                {
+                    WriteLine("Could not retrieve package metadata on solution load. Exception : {0}.", ioe.Message);
+                    WriteLine("This may happen when initially loading .NET Core projetcs. See https://github.com/OSSIndex/audit.net/issues/22");
+                    WriteLine("Try audiiting the project or solution again once the solution has completed loading.");
+                    return true;
+                }
+                else throw;
+            }
 
             WriteLine(Resources.AuditingPackagesInSolution, packages.Count(), _dte.Solution.GetName());
-
             return AuditPackagesInternal(packages);
         }
 
