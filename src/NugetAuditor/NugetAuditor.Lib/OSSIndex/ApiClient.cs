@@ -84,18 +84,28 @@ namespace NugetAuditor.Lib.OSSIndex
                 if (cache.Contains(purl.ToString()))
                 {
                     string json = (string)cache[purl.ToString()];
-                    Package cachedPkg = JsonConvert.DeserializeObject<Package>(json);
-
-                    long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
-                    long diff = now - cachedPkg.CachedAt;
-                    if (diff < cacheExpiration)
+                    Package cachedPkg = null;
+                    try
                     {
-                        result.Add(cachedPkg);
+                        cachedPkg = JsonConvert.DeserializeObject<Package>(json);
+                        long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+                        long diff = now - cachedPkg.CachedAt;
+                        if (diff < cacheExpiration)
+                        {
+                            result.Add(cachedPkg);
+                        }
+                        else
+                        {
+                            cache.Remove(purl.ToString());
+                            useCoords.Add(purl);
+                        }
                     }
-                    else
+                    catch (Exception e)
                     {
-                        cache.Remove(purl.ToString());
+                        logger.LogError($"An error ocurred deserializing {purl.ToString()} package from cache: {e.Message}.");
+                        logger.LogInformation($"Skipping cache entry for package {purl.ToString()}.");
                         useCoords.Add(purl);
+                        continue;
                     }
                 }
                 else
@@ -133,15 +143,24 @@ namespace NugetAuditor.Lib.OSSIndex
 
                 foreach (Package pkg in response.Data)
                 {
-                    pkg.CachedAt = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
-                    using (StringWriter sw = new StringWriter())
-                    using (JsonWriter writer = new JsonTextWriter(sw))
+                    try
                     {
-                        serializer.Serialize(writer, pkg);
-                        cache[pkg.Coordinates] = sw.ToString();
+                        pkg.CachedAt = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+                        using (StringWriter sw = new StringWriter())
+                        using (JsonWriter writer = new JsonTextWriter(sw))
+                        {
+                            serializer.Serialize(writer, pkg);
+                            cache[pkg.Coordinates] = sw.ToString();
+                        }
+                        result.Add(pkg);
                     }
-                    result.Add(pkg);
-                }
+                    catch (Exception e)
+                    {
+                        logger.LogError($"An error occurred deserializing response data for package {pkg.Name}.");
+                        logger.LogInformation($"Skipping results for package {pkg.Name}.");
+                        continue;
+                    }
+                }              
             }
 
             return result;

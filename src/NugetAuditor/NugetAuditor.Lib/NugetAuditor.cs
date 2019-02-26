@@ -113,8 +113,23 @@ namespace NugetAuditor.Lib
                     HashSet<PackageId> deps = null;
                     if (depCache.Contains(purl))
                     {
-                        string json = (string)depCache[purl];
-                        deps = JsonConvert.DeserializeObject<HashSet<PackageId>>(json);
+                        try
+                        {
+                            string json = (string)depCache[purl];
+                            deps = JsonConvert.DeserializeObject<HashSet<PackageId>>(json);
+                        }
+                        catch (Exception e)
+                        {
+
+                            logger.LogError($"An error ocurred deserializing {purl.ToString()} dependency from cache: {e.Message}.");
+                            logger.LogInformation($"Skipping cache entry for dependency {purl.ToString()}.");
+                            logger.LogDebug("  Fetch dependencies for " + purl);
+                            deps = getDependencies(pkg);
+                            if (deps != null)
+                            {
+                                depCache[purl] = deps.ToJson();
+                            }
+                        }
                     }
                     else
                     {
