@@ -476,11 +476,12 @@ namespace NugetAuditor.VSIX
 			ThreadPool.QueueUserWorkItem(state => {
 				// !! WORKER THREAD CONTEXT !!
 				Exception exception = null;
-				IEnumerable<AuditResult> results = null;
+                IEnumerable<PackageId> pids = (IEnumerable<PackageId>)state;
+                IEnumerable <AuditResult> results = null;
 
 				try
 				{
-					results = Lib.NugetAuditor.AuditPackages(packageIds, VSPackage.Instance.Option_CacheSync, new AuditLogger());
+					results = Lib.NugetAuditor.AuditPackages(pids, VSPackage.Instance.Option_CacheSync, new AuditLogger());
 				}
 				catch (Exception ex)
 				{
@@ -502,7 +503,7 @@ namespace NugetAuditor.VSIX
 					// notify event subscribers (if any).
 					completedHandler?.Invoke(null, new AuditCompletedEventArgs(results, exception));
 				}, null);
-			});
+			}, packageIds);
 
 			return true;
 		}
