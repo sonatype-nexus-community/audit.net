@@ -102,7 +102,7 @@ namespace NugetAuditor.Lib.OSSIndex
                     }
                     catch (Exception e)
                     {
-                        logger.LogError($"An error ocurred deserializing {purl.ToString()} package from cache: {e.Message}.");
+                        logger.LogDebug($"An error ocurred deserializing {purl.ToString()} package from cache: {e.Message}.");
                         logger.LogInformation($"Skipping cache entry for package {purl.ToString()}.");
                         useCoords.Add(purl);
                         continue;
@@ -156,7 +156,7 @@ namespace NugetAuditor.Lib.OSSIndex
                     }
                     catch (Exception e)
                     {
-                        logger.LogError($"An error occurred deserializing response data for package {pkg.Name}.");
+                        logger.LogDebug($"An error occurred deserializing response data for package {pkg.Name}.");
                         logger.LogInformation($"Skipping results for package {pkg.Name}.");
                         continue;
                     }

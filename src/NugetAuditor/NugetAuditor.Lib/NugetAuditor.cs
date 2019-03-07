@@ -139,7 +139,7 @@ namespace NugetAuditor.Lib
                     }
                     catch (Exception e)
                     {
-                        logger.LogError($"An error ocurred retrieving dependencies for package {purl.ToString()}: {e.Message}.");
+                        logger.LogDebug($"An error ocurred retrieving dependencies for package {purl.ToString()}: {e.Message}.");
                         logger.LogInformation($"Skipping dependencies for package {purl.ToString()}.");  
                     }
                 }
