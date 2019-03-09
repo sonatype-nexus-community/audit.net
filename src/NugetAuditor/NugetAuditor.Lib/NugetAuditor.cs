@@ -98,41 +98,58 @@ namespace NugetAuditor.Lib
 
         private static IEnumerable<PackageId> getDependencies(IEnumerable<PackageId> packages, ILogger logger)
         {
-            initDepCache();
-
-            HashSet<PackageId> visited = new HashSet<PackageId>();
-            Queue<PackageId> todo = new Queue<PackageId>(packages);
-            logger.LogDebug("Finding dependencies...");
-            while (todo.Count > 0)
+            try
             {
-                PackageId pkg = todo.Dequeue();
-                string purl = "pkg:nuget/" + pkg.Id + "@" + pkg.Version;
-                if (!visited.Contains(pkg))
-                {
-                    visited.Add(pkg);
-                    HashSet<PackageId> deps = null;
-                    if (depCache.Contains(purl))
+                initDepCache();
+
+                HashSet<PackageId> visited = new HashSet<PackageId>();
+                Queue<PackageId> todo = new Queue<PackageId>(packages);
+                logger.LogDebug("Finding dependencies...");
+                while (todo.Count > 0)
+                {                    
+                    PackageId pkg = todo.Dequeue();
+                    string purl = "pkg:nuget/" + pkg.Id + "@" + pkg.Version;
+                    try
                     {
-                        string json = (string)depCache[purl];
-                        deps = JsonConvert.DeserializeObject<HashSet<PackageId>>(json);
-                    }
-                    else
-                    {
-                        logger.LogDebug("  Fetch dependencies for " + purl);
-                        deps = getDependencies(pkg);
-                        if (deps != null)
+                        if (!visited.Contains(pkg))
                         {
-                            depCache[purl] = deps.ToJson();
+                            visited.Add(pkg);
+                            HashSet<PackageId> deps = null;
+                            if (depCache.Contains(purl))
+                            {
+                               
+                                string json = (string)depCache[purl];
+                                deps = JsonConvert.DeserializeObject<HashSet<PackageId>>(json);
+                                
+                            }
+                            else
+                            {
+                                logger.LogDebug("  Fetch dependencies for " + purl);
+                                deps = getDependencies(pkg);
+                                if (deps != null)
+                                {
+                                    depCache[purl] = deps.ToJson();
+                                }
+                            }
+                            foreach (PackageId dep in deps)
+                            {
+                                todo.Enqueue(dep);
+                            }
                         }
                     }
-                    foreach (PackageId dep in deps)
+                    catch (Exception e)
                     {
-                        todo.Enqueue(dep);
+                        logger.LogDebug($"An error ocurred retrieving dependencies for package {purl.ToString()}: {e.Message}.");
+                        logger.LogInformation($"Skipping dependencies for package {purl.ToString()}.");  
                     }
                 }
+                logger.LogDebug("  done.");
+                return visited;
             }
-            logger.LogDebug("  done.");
-            return visited;
+            catch (Exception e)
+            {
+                return null;
+            }
         }
 
         private static HashSet<PackageId> getDependencies(PackageId pkg)
