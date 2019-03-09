@@ -389,11 +389,24 @@ namespace NugetAuditor.VSIX
         private bool AuditSolutionPackagesInternal()
         {
             VSPackage.AssertOnMainThread();
-
-            var packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages();
+            IEnumerable<IVsPackageMetadata> packages = null;
+            try
+            {
+                packages = ServiceLocator.GetInstance<IVsPackageInstallerServices>().GetInstalledPackages();
+            }
+            catch (InvalidOperationException ioe)
+            {
+                if (ioe.Source == "NuGet.PackageManagement.VisualStudio")
+                {
+                    WriteLine("Could not retrieve package metadata on solution load. Exception : {0}.", ioe.Message);
+                    WriteLine("This may happen when initially loading .NET Core projetcs. See https://github.com/OSSIndex/audit.net/issues/22");
+                    WriteLine("Try audiiting the project or solution again once the solution has completed loading.");
+                    return true;
+                }
+                else throw;
+            }
 
             WriteLine(Resources.AuditingPackagesInSolution, packages.Count(), _dte.Solution.GetName());
-
             return AuditPackagesInternal(packages);
         }
 
@@ -463,11 +476,12 @@ namespace NugetAuditor.VSIX
 			ThreadPool.QueueUserWorkItem(state => {
 				// !! WORKER THREAD CONTEXT !!
 				Exception exception = null;
-				IEnumerable<AuditResult> results = null;
+                IEnumerable<PackageId> pids = (IEnumerable<PackageId>)state;
+                IEnumerable <AuditResult> results = null;
 
 				try
 				{
-					results = Lib.NugetAuditor.AuditPackages(packageIds, VSPackage.Instance.Option_CacheSync, new AuditLogger());
+					results = Lib.NugetAuditor.AuditPackages(pids, VSPackage.Instance.Option_CacheSync, new AuditLogger());
 				}
 				catch (Exception ex)
 				{
@@ -489,7 +503,7 @@ namespace NugetAuditor.VSIX
 					// notify event subscribers (if any).
 					completedHandler?.Invoke(null, new AuditCompletedEventArgs(results, exception));
 				}, null);
-			});
+			}, packageIds);
 
 			return true;
 		}
