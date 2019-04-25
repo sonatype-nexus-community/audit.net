@@ -1,5 +1,5 @@
 
-**Note**: The 3.x release uses the new 3.x OSS Index database, which has some rate limiting. If you notice you are hitting the limit please raise an issue. Authenticated users get a higher limit, and we am implementing authentication into Audit.NET soon. Most non-authenticated users probably won't notice the limit for many use cases. It usually kicks in only in much larger projects or higher project volumes.
+**Note**: It appears that in Visual Studio 2019 an audit does not necessarily properly run on a clean Visual Studio startup. In this situation you can kick off an audit by right clicking on the solution and select "Audit NuGet Packages for Solution". Opening projects on an already running Visual Studio *will* run an audit.
 
 # Audit.NET #
 
