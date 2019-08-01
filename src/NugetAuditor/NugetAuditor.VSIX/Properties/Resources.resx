@@ -130,7 +130,7 @@
     <value>Auditing {0} packages in project '{1}'.</value>
   </data>
   <data name="AuditingPackagesInSolution" xml:space="preserve">
-    <value>Auditing {0} packages in solution '{1}'.</value>
+    <value>Auditing {0} packages and their dependencies in solution '{1}'.</value>
   </data>
   <data name="General_MissingService" xml:space="preserve">
     <value>The service '{0}' must be installed for this feature to work. Ensure that this service is available.</value>

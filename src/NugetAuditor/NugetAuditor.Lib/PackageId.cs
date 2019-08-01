@@ -27,12 +27,15 @@ using NuGet.Versioning;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace NugetAuditor.Lib
 {
-    public class PackageId 
+    [Serializable]
+    public class PackageId : ISerializable
     {
         private string _originalVersion;
 
@@ -96,6 +99,22 @@ namespace NugetAuditor.Lib
         public override string ToString()
         {
             return string.Format("{0} {1}", this.Id, this.Version);
+        }
+
+        //note: this is private to control access; the serializer can still access this constructor
+        private PackageId(SerializationInfo info, StreamingContext ctxt)
+        {
+            this.Id = info.GetString("id");
+            this._originalVersion = info.GetString("originalVersion");
+            this.Version = NuGetVersion.Parse(info.GetString("version"));
+        }
+
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+        public void GetObjectData(SerializationInfo info, StreamingContext ctxt)
+        {
+            info.AddValue("id", this.Id);
+            info.AddValue("originalVersion", this._originalVersion);
+            info.AddValue("version", this.VersionString);
         }
     }
 }

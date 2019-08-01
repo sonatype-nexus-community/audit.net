@@ -38,6 +38,7 @@ using NuGet.VisualStudio;
 using Microsoft.VisualStudio;
 using NugetAuditor.VSIX.Properties;
 using TTasks = System.Threading.Tasks;
+using NuGet.Common;
 
 namespace NugetAuditor.VSIX
 {
@@ -328,6 +329,8 @@ namespace NugetAuditor.VSIX
             if (e.Exception != null)
             {
                 WriteLine(Resources.AuditingPackageError, e.Exception.Message);
+                WriteLine("");
+                WriteLine(Resources.AuditingPackageError, e.Exception.StackTrace);
                 ExceptionHelper.WriteToActivityLog(e.Exception);
             }
             else if (e.Results.Count() == 0)
@@ -336,6 +339,12 @@ namespace NugetAuditor.VSIX
             }
             else
             {
+                WriteLine("Packages audited:");
+                foreach (var result in e.Results)
+                {
+                    WriteLine("  * " + result.PackageId.Id + "@" + result.PackageId.VersionString);
+                }
+
                 var vulnerableCount = e.Results.Count(x => x.Status == AuditStatus.HasVulnerabilities);
 
                 if (vulnerableCount > 0)
@@ -458,7 +467,7 @@ namespace NugetAuditor.VSIX
 
 				try
 				{
-					results = Lib.NugetAuditor.AuditPackages(packageIds, VSPackage.Instance.Option_CacheSync);
+					results = Lib.NugetAuditor.AuditPackages(packageIds, VSPackage.Instance.Option_CacheSync, new AuditLogger());
 				}
 				catch (Exception ex)
 				{
@@ -593,5 +602,64 @@ namespace NugetAuditor.VSIX
              GC.SuppressFinalize(this);
         }
         #endregion
+    }
+
+    public class AuditLogger : ILogger
+    {
+        private IVsOutputWindowPane GetOutputPane()
+        {
+            return VSPackage.Instance.GetOutputPane(VSConstants.SID_SVsGeneralOutputWindowPane, "Audit.Net");
+        }
+
+        private void WriteLine(string msg)
+        {
+            var pane = GetOutputPane();
+
+            if (pane != null)
+            {
+                pane.OutputString(msg);
+                pane.OutputString(Environment.NewLine);
+            }
+        }
+
+        void ILogger.LogDebug(string data)
+        {
+            WriteLine(data);
+        }
+
+        void ILogger.LogError(string data)
+        {
+            WriteLine(data);
+        }
+
+        void ILogger.LogErrorSummary(string data)
+        {
+            WriteLine(data);
+        }
+
+        void ILogger.LogInformation(string data)
+        {
+            WriteLine(data);
+        }
+
+        void ILogger.LogInformationSummary(string data)
+        {
+            WriteLine(data);
+        }
+
+        void ILogger.LogMinimal(string data)
+        {
+            WriteLine(data);
+        }
+
+        void ILogger.LogVerbose(string data)
+        {
+            WriteLine(data);
+        }
+
+        void ILogger.LogWarning(string data)
+        {
+            WriteLine(data);
+        }
     }
 }

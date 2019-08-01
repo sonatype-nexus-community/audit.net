@@ -63,7 +63,7 @@ namespace NugetAuditor.ConsoleApp
 
             try
             {
-                var auditResults = Lib.NugetAuditor.AuditPackages(packagePath, options.CacheSync);
+                var auditResults = Lib.NugetAuditor.AuditPackages(packagePath, options.CacheSync, new Logger());
 
                 var totalPackages = auditResults.Count();
                 var vulnerablePackages = 0;

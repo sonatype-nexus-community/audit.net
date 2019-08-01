@@ -23,6 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using Newtonsoft.Json;
+using NuGet.Common;
 using PackageUrl;
 using RestSharp;
 using System;
@@ -40,22 +42,19 @@ namespace NugetAuditor.Lib.OSSIndex
 {
     internal class ApiClient : ApiClientBase, IApiClient
     {
-        private int _pageSize = 100;
+        private int _pageSize = 128;
 
         private FileCache cache = null;
 
         private long cacheExpiration { get; set; } = 43200; // Seconds in 12 hours
 
-        public ApiClient()
-            : this(new HttpRequestCachePolicy(HttpRequestCacheLevel.Default))
-        {
-            initCache();
-        }
+        private ILogger logger;
 
-        public ApiClient(HttpRequestCachePolicy cachePolicy)
+        public ApiClient(HttpRequestCachePolicy cachePolicy, ILogger logger)
             : base("https://ossindex.sonatype.org/api/v3", cachePolicy)
         {
             initCache();
+            this.logger = logger;
         }
 
         private void initCache()
@@ -82,9 +81,11 @@ namespace NugetAuditor.Lib.OSSIndex
 
             foreach (PackageURL purl in inCoords)
             {
-                Package cachedPkg = (Package)cache[purl.ToString()];
-                if (cachedPkg != null)
+                if (cache.Contains(purl.ToString()))
                 {
+                    string json = (string)cache[purl.ToString()];
+                    Package cachedPkg = JsonConvert.DeserializeObject<Package>(json);
+
                     long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
                     long diff = now - cachedPkg.CachedAt;
                     if (diff < cacheExpiration)
@@ -93,6 +94,7 @@ namespace NugetAuditor.Lib.OSSIndex
                     }
                     else
                     {
+                        cache.Remove(purl.ToString());
                         useCoords.Add(purl);
                     }
                 }
@@ -102,19 +104,25 @@ namespace NugetAuditor.Lib.OSSIndex
                 }
             }
 
-            IEnumerable<PackageURL> useEnumerable = useCoords;
+            IEnumerable<PackageURL> useEnum = useCoords;
 
-            while (useEnumerable.Any())
+            List<List<PackageURL>> batches = Split(useEnum, _pageSize);
+
+            foreach (List<PackageURL> batch in batches)
             {
                 var request = new RestRequest(Method.POST);
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.NullValueHandling = NullValueHandling.Ignore;
 
                 ComponentReport report = new ComponentReport();
-                report.coordinates = useEnumerable.Select(x => x.ToString());
+                report.coordinates = batch.Select(x => x.ToString());
 
                 request.Resource = "component-report";
                 request.RequestFormat = DataFormat.Json;
                 request.OnBeforeDeserialization = BeforeSerialization;
                 request.AddBody(report);
+
+                logger.LogDebug("OSS Index request for " + report.coordinates.Count() + " packages...");
 
                 var response = Execute<PackageResponse>(request);
 
@@ -126,16 +134,35 @@ namespace NugetAuditor.Lib.OSSIndex
                 foreach (Package pkg in response.Data)
                 {
                     pkg.CachedAt = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
-                    cache[pkg.Coordinates] = pkg;
+                    using (StringWriter sw = new StringWriter())
+                    using (JsonWriter writer = new JsonTextWriter(sw))
+                    {
+                        serializer.Serialize(writer, pkg);
+                        cache[pkg.Coordinates] = sw.ToString();
+                    }
                     result.Add(pkg);
                 }
-
-                useEnumerable = useEnumerable.Skip(this._pageSize);
             }
 
             return result;
         }
+
+        public static List<List<T>> Split<T>(IEnumerable<T> enumerable, int size)
+        {
+            List<T> collection = enumerable.ToList();
+            var chunks = new List<List<T>>();
+            var chunkCount = collection.Count() / size;
+
+            if (collection.Count % size > 0)
+                chunkCount++;
+
+            for (var i = 0; i < chunkCount; i++)
+                chunks.Add(collection.Skip(i * size).Take(size).ToList());
+
+            return chunks;
+        }
     }
+
     /** https://github.com/acarteas/FileCache
      */
     public sealed class ObjectBinder : System.Runtime.Serialization.SerializationBinder

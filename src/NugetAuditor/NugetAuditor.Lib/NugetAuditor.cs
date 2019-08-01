@@ -23,17 +23,40 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using NuGet.Protocol.Core.Types;
 using NugetAuditor.Lib.OSSIndex;
 using PackageUrl;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Cache;
+using NuGet.Configuration;
+using System.Threading;
+using NuGet.Common;
+using NuGet.Protocol;
+using NuGet.Packaging;
+using System.Runtime.Caching;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace NugetAuditor.Lib
 {
     public class NugetAuditor
     {
+        private static FileCache depCache = null;
+
+        private static void initDepCache()
+        {
+            if (depCache == null)
+            {
+                // Get an appropriate place for the cache and initialize it
+                var directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string path = Path.Combine(directory, "OSSIndex", "depCache");
+                depCache = new FileCache(path, new ObjectBinder());
+            }
+        }
+
         private static HttpRequestCachePolicy CachePolicy(int cacheSync)
         {
             switch (cacheSync)
@@ -53,10 +76,12 @@ namespace NugetAuditor.Lib
             }
         }
 
-        private static IEnumerable<AuditResult> AuditPackagesImpl(IEnumerable<PackageId> packageIds, int cacheSync)
+        private static IEnumerable<AuditResult> AuditPackagesImpl(IEnumerable<PackageId> packagesToAudit, int cacheSync, ILogger logger)
         {
+            IEnumerable<PackageId> packageIds = getDependencies(packagesToAudit, logger);
+
             var cachePolicy = CachePolicy(cacheSync);
-            var client = new OSSIndex.ApiClient(cachePolicy) as Lib.OSSIndex.IApiClient;
+            var client = new OSSIndex.ApiClient(cachePolicy, logger) as Lib.OSSIndex.IApiClient;
 
             // NugetPackageSearch(x.Id, version = x.VersionString)
             var packageSearches = packageIds.Select(x => (new PackageURL("nuget", null, x.Id, x.VersionString, null, null)));
@@ -71,28 +96,147 @@ namespace NugetAuditor.Lib
             }
         }
 
-        public static IEnumerable<AuditResult> AuditPackages(string path)
+        private static IEnumerable<PackageId> getDependencies(IEnumerable<PackageId> packages, ILogger logger)
         {
-            return AuditPackages(path, 0);
+            initDepCache();
+
+            HashSet<PackageId> visited = new HashSet<PackageId>();
+            Queue<PackageId> todo = new Queue<PackageId>(packages);
+            logger.LogDebug("Finding dependencies...");
+            while (todo.Count > 0)
+            {
+                PackageId pkg = todo.Dequeue();
+                string purl = "pkg:nuget/" + pkg.Id + "@" + pkg.Version;
+                if (!visited.Contains(pkg))
+                {
+                    visited.Add(pkg);
+                    HashSet<PackageId> deps = null;
+                    if (depCache.Contains(purl))
+                    {
+                        string json = (string)depCache[purl];
+                        deps = JsonConvert.DeserializeObject<HashSet<PackageId>>(json);
+                    }
+                    else
+                    {
+                        logger.LogDebug("  Fetch dependencies for " + purl);
+                        deps = getDependencies(pkg);
+                        if (deps != null)
+                        {
+                            depCache[purl] = deps.ToJson();
+                        }
+                    }
+                    foreach (PackageId dep in deps)
+                    {
+                        todo.Enqueue(dep);
+                    }
+                }
+            }
+            logger.LogDebug("  done.");
+            return visited;
         }
 
-        public static IEnumerable<AuditResult> AuditPackages(string path, int cacheSync)
+        private static HashSet<PackageId> getDependencies(PackageId pkg)
+        {
+            HashSet<PackageId> results = new HashSet<PackageId>();
+
+            Logger logger = new Logger();
+            List<Lazy<INuGetResourceProvider>> providers = new List<Lazy<INuGetResourceProvider>>();
+            providers.AddRange(Repository.Provider.GetCoreV3());  // Add v3 API support
+            //providers.AddRange(Repository.Provider.GetCoreV2());  // Add v2 API support
+            PackageSource packageSource = new PackageSource("https://api.nuget.org/v3/index.json");
+            SourceRepository sourceRepository = new SourceRepository(packageSource, providers);
+            PackageMetadataResource packageMetadataResource = sourceRepository.GetResource<PackageMetadataResource>();
+            var task = packageMetadataResource.GetMetadataAsync(pkg.Id, true, true, logger, CancellationToken.None);
+            task.Wait();
+            IEnumerable<IPackageSearchMetadata> searchMetadata = task.Result;
+            foreach (IPackageSearchMetadata metadata in searchMetadata)
+            {
+                if (pkg.Version == metadata.Identity.Version)
+                {
+                    foreach (PackageDependencyGroup deps in metadata.DependencySets)
+                    {
+                        foreach (var dep in deps.Packages) {
+                            results.Add(new PackageId(dep.Id, dep.VersionRange.MinVersion.ToNormalizedString()));
+                        }
+                    }
+                    break;
+                }
+            }
+            return results;
+        }
+
+        public static IEnumerable<AuditResult> AuditPackages(string path, ILogger logger)
+        {
+            return AuditPackages(path, 0, logger);
+        }
+
+        public static IEnumerable<AuditResult> AuditPackages(string path, int cacheSync, ILogger logger)
         {
             var packagesFile = new PackageReferencesFile(path);
 
             var packages = packagesFile.GetPackageReferences().Select(x => x.PackageId);
 
-            return AuditPackagesImpl(packages, cacheSync).ToList();
+            return AuditPackagesImpl(packages, cacheSync, logger).ToList();
         }
 
-        public static IEnumerable<AuditResult> AuditPackages(IEnumerable<PackageId> packages)
+        public static IEnumerable<AuditResult> AuditPackages(IEnumerable<PackageId> packages, ILogger logger)
         {
-            return AuditPackages(packages, 0);
+            return AuditPackages(packages, 0, logger);
         }
 
-        public static IEnumerable<AuditResult> AuditPackages(IEnumerable<PackageId> packages, int cacheSync)
+        public static IEnumerable<AuditResult> AuditPackages(IEnumerable<PackageId> packages, int cacheSync, ILogger logger)
         {
-            return AuditPackagesImpl(packages, cacheSync).ToList();
+            return AuditPackagesImpl(packages, cacheSync, logger).ToList();
+        }
+
+        public static IEnumerable<AuditResult> auditPackage(string name, string version, ILogger logger)
+        {
+            var pkg = new PackageId(name, version);
+            Collection<PackageId> packages = new Collection<PackageId>();
+            packages.Add(new PackageId(name, version));
+            return AuditPackagesImpl(packages, 0, logger).ToList();
+        }
+    }
+    public class Logger : ILogger
+    {
+        void ILogger.LogDebug(string data)
+        {
+            Console.WriteLine(data);
+        }
+
+        void ILogger.LogError(string data)
+        {
+            Console.WriteLine(data);
+        }
+
+        void ILogger.LogErrorSummary(string data)
+        {
+            Console.WriteLine(data);
+        }
+
+        void ILogger.LogInformation(string data)
+        {
+            Console.WriteLine(data);
+        }
+
+        void ILogger.LogInformationSummary(string data)
+        {
+            Console.WriteLine(data);
+        }
+
+        void ILogger.LogMinimal(string data)
+        {
+            Console.WriteLine(data);
+        }
+
+        void ILogger.LogVerbose(string data)
+        {
+            Console.WriteLine(data);
+        }
+
+        void ILogger.LogWarning(string data)
+        {
+            Console.WriteLine(data);
         }
     }
 }
