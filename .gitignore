@@ -3,3 +3,4 @@
 ################################################################################
 
 /tests/NugetAuditor.Tests/bin/Debug
+/tests/NugetAuditor.Tests/obj/Debug
