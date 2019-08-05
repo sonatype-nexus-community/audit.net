@@ -13,8 +13,18 @@ variables:
   solution: 'src/NugetAuditor/NugetAuditor.2017.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  patch: $[counter('VersionCounter', 0)]
+
+name: 3.1.0.$(patch) # Set the value of $(Build.BuildNumber)
 
 steps:
+- task: PowerShell@2
+  displayName: Update version in the vsix manifest
+  inputs:
+    filePath: 'scripts/update-version.ps1'
+    arguments: '$(Build.BuildNumber)'
+    pwsh: true
+
 - task: NuGetToolInstaller@1
 
 - task: NuGetCommand@2
@@ -31,3 +41,17 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)'
+    Contents: |
+      README.md
+      build/**
+      **/*.vsix
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: 'debugdrop'
+    targetPath: '$(Build.ArtifactStagingDirectory)'
