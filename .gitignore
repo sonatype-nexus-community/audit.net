@@ -4,3 +4,4 @@
 
 /tests/NugetAuditor.Tests/bin/Debug
 /tests/NugetAuditor.Tests/obj/Debug
+/tests/NugetAuditor.Tests/.vs/NugetAuditor.Tests/v16/Server/sqlite3

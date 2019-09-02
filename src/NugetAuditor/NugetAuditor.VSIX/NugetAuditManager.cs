@@ -654,20 +654,37 @@ namespace NugetAuditor.VSIX
             }
         }
 
+        void ILogger.Log(ILogMessage message)
+        {
+            WriteLine(message.Message);
+        }
+        void ILogger.Log(LogLevel level, string data)
+        {
+            WriteLine(data);
+        }
+
         void ILogger.LogDebug(string data)
         {
             WriteLine(data);
         }
+
+        async TTasks.Task ILogger.LogAsync(ILogMessage message)
+        {
+            WriteLine(message.Message);
+            await TTasks.Task.CompletedTask;
+        }
+        async TTasks.Task ILogger.LogAsync(LogLevel level, string data)
+        {
+            await TTasks.Task.CompletedTask;
+        }
+
+        
 
         void ILogger.LogError(string data)
         {
             WriteLine(data);
         }
 
-        void ILogger.LogErrorSummary(string data)
-        {
-            WriteLine(data);
-        }
 
         void ILogger.LogInformation(string data)
         {
