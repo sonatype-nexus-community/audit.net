@@ -57,7 +57,6 @@ namespace NugetAuditor.VSIX
     /// </remarks>
     public sealed class VSPackage : Package, IDisposable
     {
-        
         private static VSPackage _instance;
         private NugetAuditManager _auditManager;
         private SynchronizationContext _uiCtx;
