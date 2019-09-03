@@ -29,7 +29,7 @@
     </Buttons>
 
     <Bitmaps>
-      <Bitmap guid="guidToolbarImages" href="Resources\Toolbar2.png"/>
+      <Bitmap guid="guidToolbarImages" href="Resources\Toolbar.png"/>
     </Bitmaps>
   </Commands>
 
