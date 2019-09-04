@@ -1,3 +1,6 @@
+
+**Note**: It appears that in Visual Studio 2019 an audit does not necessarily properly run on a clean Visual Studio startup. In this situation you can kick off an audit by right clicking on the solution and select "Audit NuGet Packages for Solution". Opening projects on an already running Visual Studio *will* run an audit.
+
 # Audit.NET #
 
 Audit.NET is a Visual Studio extension that highlights NuGet package dependencies with security vulnerabilities.
@@ -8,7 +11,7 @@ Audit.NET scans your dependencies on project load, when new dependencies are add
 
 ## Installation ##
 
-Audit.NET installation has been tested on Microsoft Visual Studio Community 2015, though it will likely install on earlier versions of Visual Studio Professional.
+Audit.NET installation has been tested on Microsoft Visual Studio Community 2017, though it will likely install on earlier versions of Visual Studio Professional.
 
 1. Start Visual Studio
 2. Select the "Tools->Extensions and Updates..." menu item

@@ -1,25 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
-    <Metadata>
-        <Identity Id="Audit.Net.VörSecurity.747b4e5e-2181-432b-bc9c-5f196551e328" Version="3.1.0" Language="en-US" Publisher="Vör Security" />
-        <DisplayName>Audit.Net</DisplayName>
-        <Description xml:space="preserve">This package detects and audits installed nuget packages.</Description>
-        <MoreInfo>http://ossindex.sonatype.org/</MoreInfo>
-        <License>License.txt</License>
-        <Icon>Resources\logo-32x32.png</Icon>
-        <PreviewImage>Resources\logo-200x200.png</PreviewImage>
-    </Metadata>
-    <Installation>
-        <InstallationTarget Version="[11.0,)" Id="Microsoft.VisualStudio.Pro" />
-    </Installation>
-    <Dependencies>
-        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
-        <Dependency Id="Microsoft.VisualStudio.MPF.16.0" DisplayName="Visual Studio MPF 16.0" d:Source="Installed" Version="[16.0,17.0)" />
-    </Dependencies>
-    <Assets>
-        <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
-    </Assets>
-    <Prerequisites>
-        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0.26004.1,16.0)" DisplayName="Visual Studio core editor" />
-    </Prerequisites>
+	<Metadata>
+		<Identity Id="Audit.Net.VörSecurity.747b4e5e-2181-432b-bc9c-5f196551e328" Version="3.0.5" Language="en-US" Publisher="Vör Security" />
+		<DisplayName>Audit.Net</DisplayName>
+		<Description xml:space="preserve">This package detects and audits installed nuget packages.</Description>
+		<MoreInfo>http://ossindex.sonatype.org/</MoreInfo>
+		<License>License.txt</License>
+		<Icon>Resources\logo-32x32.png</Icon>
+		<PreviewImage>Resources\logo-200x200.png</PreviewImage>
+	</Metadata>
+	<Installation>
+		<InstallationTarget Version="[11.0,)" Id="Microsoft.VisualStudio.Pro" />
+	</Installation>
+	<Dependencies>
+		<Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+	</Dependencies>
+	<Assets>
+		<Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+	</Assets>
+	<Prerequisites>
+		<Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0.26004.1,17.0)" DisplayName="Visual Studio core editor" />
+	</Prerequisites>
 </PackageManifest>
