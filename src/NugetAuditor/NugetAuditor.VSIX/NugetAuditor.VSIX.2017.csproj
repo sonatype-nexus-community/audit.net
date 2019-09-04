@@ -108,6 +108,7 @@
     <None Include="..\NugetAuditor.VSIX.licenseheader">
       <Link>NugetAuditor.VSIX.licenseheader</Link>
     </None>
+    <None Include="App.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
