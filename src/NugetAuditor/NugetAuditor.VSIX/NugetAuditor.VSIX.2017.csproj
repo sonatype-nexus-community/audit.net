@@ -30,7 +30,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NugetAuditor.VSIX</RootNamespace>
     <AssemblyName>NugetAuditor.VSIX</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>true</IncludeDebugSymbolsInVSIXContainer>
