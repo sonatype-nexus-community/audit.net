@@ -433,9 +433,8 @@ namespace NugetAuditor.VSIX
             {
                 if (ioe.Source == "NuGet.PackageManagement.VisualStudio")
                 {
-                    WriteLine("Could not retrieve package metadata on solution load. Exception : {0}.", ioe.Message);
-                    WriteLine("This may happen when initially loading .NET Core projetcs. See https://github.com/OSSIndex/audit.net/issues/22");
-                    WriteLine("Try audiiting the project or solution again once the solution has completed loading.");
+                    WriteLine("Could not retrieve NuGet package metadata. Exception : {0}.", ioe.Message);
+                    WriteLine("Try auditing the project or solution again.");
                     return true;
                 }
                 else throw;
