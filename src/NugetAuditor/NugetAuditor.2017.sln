@@ -24,8 +24,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.VSIX.2017", "N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.Tests", "..\..\tests\NugetAuditor.Tests\NugetAuditor.Tests.csproj", "{6CCBA08E-2FCD-468E-ADD9-BF62B5DD2CD0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.VSIX.2019", "NugetAuditor.VSIX\NugetAuditor.VSIX.2019.csproj", "{2AB4AB06-EFCA-4DCC-A95B-ACDA3292EE97}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,10 +46,6 @@ Global
 		{6CCBA08E-2FCD-468E-ADD9-BF62B5DD2CD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CCBA08E-2FCD-468E-ADD9-BF62B5DD2CD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6CCBA08E-2FCD-468E-ADD9-BF62B5DD2CD0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2AB4AB06-EFCA-4DCC-A95B-ACDA3292EE97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2AB4AB06-EFCA-4DCC-A95B-ACDA3292EE97}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2AB4AB06-EFCA-4DCC-A95B-ACDA3292EE97}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2AB4AB06-EFCA-4DCC-A95B-ACDA3292EE97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
