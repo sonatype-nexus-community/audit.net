@@ -350,10 +350,28 @@ namespace NugetAuditor.VSIX
                 if (vulnerableCount > 0)
                 {
                     WriteLine(Resources.VulnerabilitiesFound, vulnerableCount);
+                    foreach (AuditResult r in e.Results.Where(x => x.Status == AuditStatus.HasVulnerabilities))
+                    {
+                        if (r.MatchedVulnerabilities == 1)
+                        {
+                            WriteLine("Package: {0} is vulnerable. 1 vulnerability found.", r.PackageId);
+                        }
+                        else
+                        {
+                            WriteLine("Package: {0} is vulnerable. {1} vulnerabilities found.", r.PackageId, r.MatchedVulnerabilities);
+                        }
+                        foreach (var v in r.Vulnerabilities)
+                        {
+                            WriteLine("    {0} {1} {2} CWE: {3} CvssS: {4} CvssV: {5}", v.Id, v.Title, v.Description, v.Cwe, v.CvssScore, v.CvssVector);
+                        }
+                    }
                 }
                 else
                 {
-                    WriteLine(Resources.NoVulnarebilitiesFound);
+                    foreach (AuditResult r in e.Results)
+                    {
+                        WriteLine("No vulnerabilities found for package {0}.", r.PackageId);
+                    }
                 }
 
                 //update audit results dictionary

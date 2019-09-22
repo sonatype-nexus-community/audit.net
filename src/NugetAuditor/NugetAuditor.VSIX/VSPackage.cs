@@ -64,6 +64,7 @@ namespace NugetAuditor.VSIX
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class VSPackage : Package, IDisposable
     {
+        
         private static VSPackage _instance;
         private NugetAuditManager _auditManager;
         private SynchronizationContext _uiCtx;

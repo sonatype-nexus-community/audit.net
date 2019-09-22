@@ -1,0 +1,57 @@
+# .NET Desktop
+# Build and run tests for .NET Desktop or Windows classic desktop solutions.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: 'src/NugetAuditor/NugetAuditor.2017.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  patch: $[counter('VersionCounter', 0)]
+
+name: 3.1.0.$(patch) # Set the value of $(Build.BuildNumber)
+
+steps:
+- task: PowerShell@2
+  displayName: Update version in the vsix manifest
+  inputs:
+    filePath: 'scripts/update-version.ps1'
+    arguments: '$(Build.BuildNumber)'
+    pwsh: true
+
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: VSTest@2
+  inputs:
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)'
+    Contents: |
+      README.md
+      build/**
+      **/*.vsix
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: 'debugdrop'
+    targetPath: '$(Build.ArtifactStagingDirectory)'
