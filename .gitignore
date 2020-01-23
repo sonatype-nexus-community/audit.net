@@ -5,3 +5,7 @@
 /tests/NugetAuditor.Tests/bin/Debug
 /tests/NugetAuditor.Tests/obj/Debug
 /tests/NugetAuditor.Tests/.vs/NugetAuditor.Tests/v16/Server/sqlite3
+/tests/NugetAuditor.Tests/TestFiles/.vs/project.1
+/tests/NugetAuditor.Tests/TestFiles/obj/Debug/netcoreapp2.1
+/tests/NugetAuditor.Tests/TestFiles/Properties/launchSettings.json
+/tests/NugetAuditor.Tests/TestFiles/project.1.csproj.user

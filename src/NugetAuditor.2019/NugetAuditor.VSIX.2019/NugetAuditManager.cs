@@ -229,7 +229,10 @@ namespace NugetAuditor.VSIX
 
         private void CreateMarkers(string documentPath)
         {
-            _markerProvider.CreateMarkers(documentPath);
+            if (documentPath != string.Empty)
+            {
+                _markerProvider.CreateMarkers(documentPath);
+            }
         }
 
         private void RemoveTasks(IEnumerable<VulnerabilityTask> tasks)

@@ -25,9 +25,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.XPath;
 
 namespace NugetAuditor.Lib
 {
@@ -37,25 +39,18 @@ namespace NugetAuditor.Lib
 
         public PackageReferencesFile(string path)
         {
-            if (string.IsNullOrEmpty(path))
+            if (path.ToUpper().EndsWith(".CSPROJ"))
             {
-                throw new ArgumentNullException("path");
+                IsSdkProject = true;
             }
-
-            this.Path = path;
+            else if (path.ToUpper().EndsWith("PACKAGES.CONFIG"))
+            {
+                IsSdkProject = false;
+            }
+            Path = path;
         }
 
-        private IEnumerable<XElement> GetElements()
-        {
-            if (!System.IO.File.Exists(this.Path))
-            {
-                return Enumerable.Empty<XElement>();
-            }
-
-            var loadOptions = LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo;
-
-            return XDocument.Load(this.Path, loadOptions).Root.Elements("package");
-        }
+        public bool IsSdkProject { get; protected set; }
 
         private bool IsOSSIndexIgnored(XNode node)
         {
@@ -92,23 +87,53 @@ namespace NugetAuditor.Lib
 
         public IEnumerable<PackageReference> GetPackageReferences()
         {
-            return GetElements().Select(x =>
+            if (this.Path == string.Empty || !File.Exists(this.Path))
             {
-                var start = x as IXmlLineInfo;
-                var end = x.NextNode as IXmlLineInfo;
+                return Enumerable.Empty<PackageReference>();
+            }
 
-                var id = x.GetAttributeValue("id", string.Empty);
-                var version = x.GetAttributeValue("version", string.Empty);
+            var loadOptions = LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo;
 
-                return new PackageReference(this.Path, id, version)
+            if (!IsSdkProject)
+            {
+                var elements = XDocument.Load(this.Path, loadOptions).Root.Elements("package");
+                return elements.Select(x =>
                 {
-                    StartLine = start.LineNumber,
-                    StartPos = start.LinePosition - 1,
-                    EndLine = end.LineNumber,
-                    EndPos = end.LinePosition - 2,
-                    Ignore = IsOSSIndexIgnored(x),
-                };
-            });
+                    var start = x as IXmlLineInfo;
+                    var end = x.NextNode as IXmlLineInfo;
+
+                    var id = x.GetAttributeValue("id", string.Empty);
+                    var version = x.GetAttributeValue("version", string.Empty);
+
+                    return new PackageReference(this.Path, id, version)
+                    {
+                        StartLine = start.LineNumber,
+                        StartPos = start.LinePosition - 1,
+                        EndLine = end.LineNumber,
+                        EndPos = end.LinePosition - 2,
+                        Ignore = IsOSSIndexIgnored(x),
+                    };
+                });
+            }
+            else
+            {
+                var elements = XDocument.Load(this.Path, loadOptions).Root.Descendants().Where(e => e.Name.LocalName == "PackageReference");
+                return elements.Select(x =>
+                {
+                    var start = x as IXmlLineInfo;
+                    var end = x.NextNode as IXmlLineInfo;
+                    var name = x.GetAttributeValue("Include", string.Empty);
+                    var version = x.GetAttributeValue("Version", string.Empty);
+                    return new PackageReference(this.Path, name, version)
+                    {
+                        StartLine = start.LineNumber,
+                        StartPos = start.LinePosition - 1,
+                        EndLine = end.LineNumber,
+                        EndPos = end.LinePosition - 2,
+                        Ignore = IsOSSIndexIgnored(x),
+                    };
+                });
+            }
         }
     }
 }

@@ -125,7 +125,6 @@ namespace NugetAuditor.VSIX
             // Listen for subsequent solution events
             SolutionEvents.OnAfterOpenSolution += HandleOpenSolution;
         }
-
         #endregion
 
         #region Properties
@@ -223,6 +222,7 @@ namespace NugetAuditor.VSIX
             // Handle the open solution and try to do as much work
             // on a background thread as possible
             AuditManager.QueueAuditSolutionPackages();
+          
         }
 
         private void AddMenuCommandHandlers()
