@@ -289,7 +289,7 @@ namespace NugetAuditor.VSIX
                             {
                                 Priority = affecting ? TaskPriority.Normal : TaskPriority.Low,
                                 ErrorCategory = affecting ? TaskErrorCategory.Error : TaskErrorCategory.Message,
-                                Text = string.Format("{0}: {1}\nReference: https://ossindex.sonatype.org/resource/vulnerability/{2}\n{3}", packageReference.PackageId, vulnerability.Title, vulnerability.Id, vulnerability.Description),
+                                Text = string.Format("{0}: {1}\nReference: https://ossindex.sonatype.org/vuln/{2}\n{3}", packageReference.PackageId, vulnerability.Title, vulnerability.Id, vulnerability.Description),
                                 HierarchyItem = projectHierarchy,
                                 Category = TaskCategory.Misc,
                                 Document = packageReference.File,

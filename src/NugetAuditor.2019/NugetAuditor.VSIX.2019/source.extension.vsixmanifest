@@ -1,11 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="Audit.Net.OSSIndex.747b4e5e-2181-432b-bc9c-5f196551e328" Version="3.4.0" Language="en-US" Publisher="Sonatype OSS Index" />
+        <Identity Id="Audit.Net.OSSIndex.747b4e5e-2181-432b-bc9c-5f196551e328" Version="3.4.1" Language="en-US" Publisher="Sonatype OSS Index" />
         <DisplayName>Audit.Net</DisplayName>
         <Description xml:space="preserve">Detects security vulnerabilities in installed NuGet packages using data from Sonatype OSS Index.</Description>
         <MoreInfo>http://ossindex.sonatype.org/</MoreInfo>
         <License>License.txt</License>
+        <ReleaseNotes>Fix bug in reading packages from .NET Sdk-style projects.</ReleaseNotes>
         <Icon>Resources\sonatype64x64.png</Icon>
         <PreviewImage>Resources\logo-200x200-2.png</PreviewImage>
     </Metadata>
