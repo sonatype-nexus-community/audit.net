@@ -61,4 +61,4 @@ steps:
     targetType: 'filePath'
     filePath: '$(Build.SourcesDirectory)/scripts/s3-upload-aws4.sh'
     workingDirectory: '$(Build.SourcesDirectory)/src/NugetAuditor.2019/NugetAuditor.VSIX.2019/bin/Release/'
-    arguments: 'NugetAuditor.VSIX.vsix'
+    arguments: 'NugetAuditor.VSIX.vsix NugetAuditor.VSIX.vsix'
