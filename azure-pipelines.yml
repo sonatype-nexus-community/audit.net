@@ -12,7 +12,7 @@ pool:
 variables:
   solution: 'src/NugetAuditor.2019/NugetAuditor.2019.sln'
   buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  buildConfiguration: 'Debug'
   patch: $[counter('VersionCounter', 0)]
 
 name: 3.4.1.$(patch) # Set the value of $(Build.BuildNumber)
@@ -60,5 +60,5 @@ steps:
   inputs:
     targetType: 'filePath'
     filePath: '$(Build.SourcesDirectory)/scripts/s3-upload-aws4.sh'
-    workingDirectory: '$(Build.SourcesDirectory)/src/NugetAuditor.2019/NugetAuditor.VSIX.2019/bin/Release/'
+    workingDirectory: '$(Build.SourcesDirectory)/src/NugetAuditor.2019/NugetAuditor.VSIX.2019/bin/Debug/'
     arguments: 'NugetAuditor.VSIX.vsix NugetAuditor.VSIX.vsix'
