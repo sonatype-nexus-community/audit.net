@@ -161,7 +161,6 @@
     <Compile Include="PackageURL\PackageURL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="OSSIndex\Vulnerability.cs" />
-    <Compile Include="WhiteListed.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\NugetAuditor.snk">
