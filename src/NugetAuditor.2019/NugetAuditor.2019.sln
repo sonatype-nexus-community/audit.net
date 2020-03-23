@@ -7,6 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.VSIX.2019", "N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NugetAuditor.Lib", "NugetAuditor.Lib\NugetAuditor.Lib.csproj", "{B7B53C9B-AAB6-496C-92FA-5E315A71753B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{DC783692-0348-4014-A466-4EE4F0660700}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\scripts\s3-upload-aws4.sh = ..\..\scripts\s3-upload-aws4.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -35,6 +35,8 @@ using NuGet.VisualStudio;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
+using System.Xml.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
 using System.Threading;
@@ -76,7 +78,22 @@ namespace NugetAuditor.VSIX
 
         internal static string GetPackageReferenceFilePath(this Project project)
         {
-            return Path.Combine(Path.GetDirectoryName(project.FullName), "packages.config");
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var projFileLines = File.ReadAllLines(project.FullName);
+            foreach(var line in projFileLines)
+            {
+                if (line.Contains("Project") && line.Contains("\"Microsoft.NET.Sdk") || line.Contains("\'Microsoft.NET.Sdk\'"))
+                {
+                    return project.FullName;
+                }
+            }
+                            
+            var packagesFile = Path.Combine(Path.GetDirectoryName(project.FullName), "packages.config");
+            if (File.Exists(packagesFile))
+            {
+                return packagesFile;
+            }
+            return string.Empty;
         }
 
         internal static IVsTextLines GetDocumentTextLines(string path)
